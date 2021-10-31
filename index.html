@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+</head>
+
+<body>
+  <script type="module" src="./target/wasm32-unknown-unknown/debug/ultrustar.js"></script>
+  <script type="module">
+    import ultrustar_loader from './target/wasm32-unknown-unknown/debug/ultrustar.js';
+    let ultrastar = await ultrustar_loader('target/wasm32-unknown-unknown/debug/ultrustar_bg.wasm');
+    ultrastar.render_into('body');
+  </script>
+</body>
+
+</html>
