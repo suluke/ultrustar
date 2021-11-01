@@ -26,8 +26,12 @@ enum CliSubcommands {
 #[argh(subcommand, name = "serve")]
 struct CliServe {
     /// port used for serving
-    #[argh(option)]
+    #[argh(option, short = 'p')]
     port: Option<usize>,
+
+    /// disable auto-compiling
+    #[argh(switch)]
+    only: bool,
 }
 
 fn project_root() -> Result<PathBuf> {
@@ -75,24 +79,34 @@ fn serve(args: &Cli) -> Result<()> {
 
     let CliSubcommands::Serve(serve_opts) = args.subcommand.as_ref().unwrap();
     let port = serve_opts.port.unwrap_or(3000);
-    println!("Serving on port {}", port);
+    println!("Serving on http://localhost:{}/index.html", port);
 
     let mut sys = rt::System::new("ultrustar-dev");
-    let srv = HttpServer::new(|| {
-        let rootdir = project_root().unwrap();
-        App::new()
-            .wrap_fn(|req, srv| {
-                if req.path().ends_with(".wasm") {
-                    let args: Cli = argh::from_env();
-                    build(&args).unwrap();
-                }
-                srv.call(req)
-            })
-            .service(Files::new("/", rootdir))
-    })
-    .bind(format!("127.0.0.1:{}", port))?
-    .run();
-    sys.block_on(srv).map_err(anyhow::Error::from)
+    if serve_opts.only {
+        let srv = HttpServer::new(|| {
+            let rootdir = project_root().unwrap();
+            App::new().service(Files::new("/", rootdir))
+        })
+        .bind(format!("127.0.0.1:{}", port))?
+        .run();
+        sys.block_on(srv).map_err(anyhow::Error::from)
+    } else {
+        let srv = HttpServer::new(|| {
+            let rootdir = project_root().unwrap();
+            App::new()
+                .wrap_fn(|req, srv| {
+                    if req.path().ends_with(".wasm") {
+                        let args: Cli = argh::from_env();
+                        build(&args).unwrap();
+                    }
+                    srv.call(req)
+                })
+                .service(Files::new("/", rootdir))
+        })
+        .bind(format!("127.0.0.1:{}", port))?
+        .run();
+        sys.block_on(srv).map_err(anyhow::Error::from)
+    }
 }
 
 fn main() -> Result<()> {

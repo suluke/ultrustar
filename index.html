@@ -2,15 +2,14 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
+  <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
 </head>
 
 <body>
-  <script type="module" src="./target/wasm32-unknown-unknown/debug/ultrustar.js"></script>
   <script type="module">
-    import ultrustar_loader from './target/wasm32-unknown-unknown/debug/ultrustar.js';
-    let ultrastar = await ultrustar_loader('target/wasm32-unknown-unknown/debug/ultrustar_bg.wasm');
-    ultrastar.render_into('body');
+    import ultrustar_init, { render_into } from './target/wasm32-unknown-unknown/debug/ultrustar.js';
+    await ultrustar_init('target/wasm32-unknown-unknown/debug/ultrustar_bg.wasm');
+    render_into(document.body);
   </script>
 </body>
 

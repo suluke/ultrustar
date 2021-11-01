@@ -17,6 +17,8 @@ rustup target install wasm32-unknown-unknown
 ```
 Afterwards, our custom cargo subcommand `cargo wasm` will do the rest.
 
+> Tip for vscode: When developing for the browser it makes sense to change the default target in `settings.json` like so: `"rust-analyzer.cargo.target": "wasm32-unknown-unknown"`
+
 
 ## Related Projects
 * [UltraStar Deluxe](https://github.com/UltraStar-Deluxe/USDX)
