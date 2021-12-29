@@ -12,4 +12,4 @@
 * Gamepads
 * Webcam?
 * i18n
-
+* CI

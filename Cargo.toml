@@ -1,5 +1,6 @@
 [workspace]
 members = [
     "src/ultrustar",
+    "src/webgl_generator_websys",
     "xtask/wasm",
 ]
