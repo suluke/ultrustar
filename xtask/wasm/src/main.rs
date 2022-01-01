@@ -56,9 +56,12 @@ fn target_dir() -> Result<PathBuf> {
 fn build(args: &Cli) -> Result<()> {
     let rootdir = project_root()?;
     let _ = pushd(rootdir)?;
-    cmd!("cargo build -p ultrustar --target wasm32-unknown-unknown")
-        .env_remove("CARGO_MANIFEST_DIR")
-        .run()?;
+    let cmd = if args.release {
+        cmd!("cargo build --release -p ultrustar --target wasm32-unknown-unknown")
+    } else {
+        cmd!("cargo build -p ultrustar --target wasm32-unknown-unknown")
+    };
+    cmd.env_remove("CARGO_MANIFEST_DIR").run()?;
     let mut wasm_path = target_dir()?;
     wasm_path.push("ultrastar_core.wasm");
     let mut builder = Bindgen::new();
@@ -75,7 +78,10 @@ fn build(args: &Cli) -> Result<()> {
 
 fn serve(args: &Cli) -> Result<()> {
     use actix_files::Files;
-    use actix_web::{dev::Service, rt, App, HttpServer};
+    use actix_web::{
+        dev::Service, dev::ServiceResponse, error::ErrorInternalServerError, rt, App, HttpServer,
+    };
+    use std::future::{ready, Future};
 
     let CliSubcommands::Serve(serve_opts) = args.subcommand.as_ref().unwrap();
     let port = serve_opts.port.unwrap_or(3000);
@@ -91,13 +97,19 @@ fn serve(args: &Cli) -> Result<()> {
         .run();
         sys.block_on(srv).map_err(anyhow::Error::from)
     } else {
-        let srv = HttpServer::new(|| {
+        let srv = HttpServer::new(move || {
             let rootdir = project_root().unwrap();
+            // FIXME I couldn't manage to make the lambda async directly.
+            // This would help to avoid all the manual work around Future/Pin etc...
+            type MiddlewareResult =
+                std::pin::Pin<Box<dyn Future<Output = Result<ServiceResponse, actix_web::Error>>>>;
             App::new()
-                .wrap_fn(|req, srv| {
-                    if req.path().ends_with(".wasm") {
+                .wrap_fn(|req, srv| -> MiddlewareResult {
+                    if req.path().starts_with("/target/wasm32-unknown-unknown/") {
                         let args: Cli = argh::from_env();
-                        build(&args).unwrap();
+                        if let Err(err) = build(&args) {
+                            return Box::pin(ready(Err(ErrorInternalServerError(err))));
+                        }
                     }
                     srv.call(req)
                 })
