@@ -1,5 +1,9 @@
 use wasm_bindgen::{prelude::*, JsCast};
-use web_sys::{console, HtmlCanvasElement, Node};
+use web_sys::{console, HtmlCanvasElement, Node, WebGlRenderingContext};
+use js_sys::{JsString, Boolean, Map};
+
+#[path = "webgl_bindings.rs"]
+pub mod gl;
 
 fn create_canvas() -> Result<HtmlCanvasElement, JsValue> {
     let window = web_sys::window().expect("no global `window` exists");
@@ -12,6 +16,11 @@ fn create_canvas() -> Result<HtmlCanvasElement, JsValue> {
 pub fn render_into(parent: &Node) -> Result<(), JsValue> {
     console::log_1(&"Hello wasm".into());
     let canvas = create_canvas()?;
+    let ctx_opts = Map::new();
+    ctx_opts.set(&JsString::from("depth"), &Boolean::from(false));
+    let ctx : WebGlRenderingContext = canvas.get_context_with_context_options("webgl", &ctx_opts)?.unwrap().dyn_into()?;
+    gl::set_context(ctx);
     parent.append_child(&canvas.into())?;
+
     Ok(())
 }
