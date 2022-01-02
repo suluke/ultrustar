@@ -45,11 +45,11 @@ fn project_root() -> Result<PathBuf> {
     Ok(dir)
 }
 
-fn target_dir() -> Result<PathBuf> {
+fn target_dir(args: &Cli) -> Result<PathBuf> {
     let mut dir = project_root()?;
     dir.push("target");
     dir.push("wasm32-unknown-unknown");
-    dir.push("debug");
+    dir.push(if args.release { "release" } else { "debug" });
     Ok(dir)
 }
 
@@ -62,7 +62,7 @@ fn build(args: &Cli) -> Result<()> {
         cmd!("cargo build -p ultrustar --target wasm32-unknown-unknown")
     };
     cmd.env_remove("CARGO_MANIFEST_DIR").run()?;
-    let mut wasm_path = target_dir()?;
+    let mut wasm_path = target_dir(args)?;
     wasm_path.push("ultrastar_core.wasm");
     let mut builder = Bindgen::new();
 
@@ -73,7 +73,7 @@ fn build(args: &Cli) -> Result<()> {
         .keep_debug(!args.release)
         .out_name("ultrustar")
         .encode_into(EncodeInto::Always);
-    builder.generate(target_dir()?)
+    builder.generate(target_dir(args)?)
 }
 
 fn serve(args: &Cli) -> Result<()> {

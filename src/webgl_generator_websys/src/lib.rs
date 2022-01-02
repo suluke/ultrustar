@@ -4,11 +4,11 @@ pub use webgl_generator::*;
 
 fn write_header<W>(registry: &Registry, dest: &mut W) -> std::io::Result<()>
 where
-    W: std::io::Write
+    W: std::io::Write,
 {
     writeln!(
         dest,
-r#"
+        r#"
 /// DO NOT CHANGE - THIS FILE IS GENERATED AUTOMATICALLY
 
 // {registry:?}

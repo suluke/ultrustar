@@ -1,5 +1,7 @@
 # ultrustar
 
+![CI](https://github.com/suluke/ultrustar/actions/workflows/ci.yml/badge.svg)
+
 ## Build Instructions
 
 ### Generic Preparations
