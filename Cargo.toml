@@ -2,5 +2,6 @@
 members = [
     "src/ultrustar",
     "src/webgl_generator_websys",
+    "xtask/checkit",
     "xtask/wasm",
 ]

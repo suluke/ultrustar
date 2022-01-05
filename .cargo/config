@@ -1,2 +1,19 @@
 [alias]
+checkit = "run -p checkit -- "
 wasm = "run -p wasm -- "
+
+# Project-wide linting configuration
+#
+# https://doc.rust-lang.org/rustc/lints/listing/index.html
+# https://rust-lang.github.io/rust-clippy/master/index.html
+[target.'cfg(all())']
+rustflags = [
+    "-Dunsafe_code",
+    "-Dunused_imports",
+    "-Dclippy::all",
+    "-Dclippy::complexity",
+    "-Dclippy::pedantic",
+    "-Dclippy::perf",
+    "-Dclippy::style",
+    "-Dclippy::suspicious"
+]

@@ -55,7 +55,7 @@ fn target_dir(args: &Cli) -> Result<PathBuf> {
 
 fn build(args: &Cli) -> Result<()> {
     let rootdir = project_root()?;
-    let _ = pushd(rootdir)?;
+    let _cwd = pushd(rootdir)?;
     let cmd = if args.release {
         cmd!("cargo build --release -p ultrustar --target wasm32-unknown-unknown")
     } else {
@@ -98,11 +98,12 @@ fn serve(args: &Cli) -> Result<()> {
         sys.block_on(srv).map_err(anyhow::Error::from)
     } else {
         let srv = HttpServer::new(move || {
-            let rootdir = project_root().unwrap();
             // FIXME I couldn't manage to make the lambda async directly.
             // This would help to avoid all the manual work around Future/Pin etc...
             type MiddlewareResult =
                 std::pin::Pin<Box<dyn Future<Output = Result<ServiceResponse, actix_web::Error>>>>;
+
+            let rootdir = project_root().unwrap();
             App::new()
                 .wrap_fn(|req, srv| -> MiddlewareResult {
                     if req.path().starts_with("/target/wasm32-unknown-unknown/") {

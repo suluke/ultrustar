@@ -1,4 +1,4 @@
-/// Re-export of webgl_generator apis so that users don't need to explicitly name it
+/// Re-export of `webgl_generator` apis so that users don't need to explicitly name it
 /// as a dependency. This avoids version mismatches.
 pub use webgl_generator::*;
 

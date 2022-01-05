@@ -26,13 +26,8 @@ jobs:
       run: rustup target install wasm32-unknown-unknown
     - name: Compile wasm (release)
       run: cargo wasm --release
-    - name: Run clippy
-      run: cargo clippy
-    - name: Run rustfmt
-      # Check that formatting (or building) does not alter files under git control.
-      # MUST run after build because rustfmt will complain if generated source files
-      # (bindings) are missing.
-      run: |
-        cargo fmt --all
-        test -z "$(git status --porcelain=v1 2>/dev/null)"
+    # MUST run after build because rustfmt will complain if generated source files
+    # (bindings) are missing.
+    - name: Run checks
+      run: cargo checkit
 
