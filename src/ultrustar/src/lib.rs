@@ -4,7 +4,7 @@
     clippy::pedantic,
     clippy::perf,
     clippy::style,
-    clippy::suspicious,
+    clippy::suspicious
 )]
 
 pub mod platform;
