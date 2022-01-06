@@ -1,3 +1,14 @@
+#![deny(
+    unsafe_code,
+    unused_imports,
+    clippy::all,
+    clippy::complexity,
+    clippy::pedantic,
+    clippy::perf,
+    clippy::style,
+    clippy::suspicious
+)]
+
 use anyhow::{anyhow, Result};
 use argh::FromArgs;
 use lazy_static::lazy_static;

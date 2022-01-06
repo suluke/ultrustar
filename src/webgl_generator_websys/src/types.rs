@@ -1,7 +1,7 @@
 use webgl_generator::{NamedType, Primitive, Registry, Type, TypeKind};
 
 pub fn stringify_return(ty: &Type, registry: &Registry) -> String {
-    match &ty.kind {
+    let base_ty = match &ty.kind {
         TypeKind::Primitive(p) => p.name().into(),
         TypeKind::String => "JsString".into(),
         TypeKind::ArrayBuffer | TypeKind::ArrayBufferView => "ArrayBuffer".into(),
@@ -36,5 +36,10 @@ pub fn stringify_return(ty: &Type, registry: &Registry) -> String {
             NamedType::Callback(_) => unimplemented!("Unsupported return type: Callback"),
         },
         TypeKind::Any | TypeKind::Object => "JsValue".into(),
+    };
+    if ty.optional {
+        format!("Option<{}>", base_ty)
+    } else {
+        base_ty
     }
 }

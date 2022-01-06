@@ -1,3 +1,14 @@
+#![deny(
+    unsafe_code,
+    unused_imports,
+    clippy::all,
+    clippy::complexity,
+    clippy::pedantic,
+    clippy::perf,
+    clippy::style,
+    clippy::suspicious
+)]
+
 use anyhow::Result;
 use argh::FromArgs;
 use std::path::PathBuf;
@@ -56,12 +67,12 @@ fn target_dir(args: &Cli) -> Result<PathBuf> {
 fn build(args: &Cli) -> Result<()> {
     let rootdir = project_root()?;
     let _cwd = pushd(rootdir)?;
-    let cmd = if args.release {
+    let _cmd = if args.release {
         cmd!("cargo build --release -p ultrustar --target wasm32-unknown-unknown")
     } else {
         cmd!("cargo build -p ultrustar --target wasm32-unknown-unknown")
-    };
-    cmd.env_remove("CARGO_MANIFEST_DIR").run()?;
+    }
+    .run()?;
     let mut wasm_path = target_dir(args)?;
     wasm_path.push("ultrastar_core.wasm");
     let mut builder = Bindgen::new();

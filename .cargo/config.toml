@@ -1,0 +1,3 @@
+[alias]
+checkit = "run --release -p checkit -- "
+wasm = "run --release -p wasm -- "

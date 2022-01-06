@@ -1,7 +1,20 @@
+#![deny(
+    unsafe_code,
+    unused_imports,
+    clippy::all,
+    clippy::complexity,
+    clippy::pedantic,
+    clippy::perf,
+    clippy::style,
+    clippy::suspicious
+)]
+
 /// Re-export of `webgl_generator` apis so that users don't need to explicitly name it
 /// as a dependency. This avoids version mismatches.
 pub use webgl_generator::*;
 
+mod dicts;
+mod enums;
 mod types;
 
 fn write_header<W>(registry: &Registry, dest: &mut W) -> std::io::Result<()>
@@ -68,6 +81,8 @@ impl Generator for WebSysGen {
     {
         write_header(registry, dest)?;
         write_typedefs(registry, dest)?;
+        enums::write(registry, dest)?;
+        dicts::write(registry, dest)?;
         Ok(())
     }
 }

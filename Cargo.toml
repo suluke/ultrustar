@@ -5,3 +5,7 @@ members = [
     "xtask/checkit",
     "xtask/wasm",
 ]
+default-members = [
+    "src/ultrustar",
+    "src/webgl_generator_websys",
+]
