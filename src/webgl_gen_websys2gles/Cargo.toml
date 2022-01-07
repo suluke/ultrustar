@@ -1,9 +1,10 @@
 [package]
-name = "webgl_generator_websys"
+name = "webgl_gen_websys2gles"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+heck = "0.4"
 webgl_generator = "0.2.0"

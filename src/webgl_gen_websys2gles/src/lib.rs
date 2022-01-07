@@ -14,7 +14,8 @@
 pub use webgl_generator::*;
 
 mod dicts;
-mod enums;
+mod interfaces;
+// mod enums;
 mod types;
 
 fn write_header<W>(registry: &Registry, dest: &mut W) -> std::io::Result<()>
@@ -29,7 +30,7 @@ where
 // {registry:?}
 
 #![allow(unused_imports)] // FIXME shouldn't be necessary
-use std::cell::RefCell;
+use std::cell::{{Ref, RefCell}};
 use wasm_bindgen::{{JsValue}};
 use web_sys::{{HtmlCanvasElement, WebGlRenderingContext}};
 use js_sys::{{
@@ -51,6 +52,15 @@ pub fn set_context(ctx: WebGlRenderingContext) {{
     CONTEXT.with(|tls_ctx| {{
         *tls_ctx.borrow_mut() = Some(ctx);
     }});
+}}
+macro_rules! withctx {{
+    ($global:ident, $local:ident, $code:block) => {{
+        $global.with(|ctx| {{
+            let scope = ctx.borrow();
+            let $local = scope.as_ref().expect("WebGlRenderingContext not set for current thread");
+            $code
+        }})
+    }};
 }}
 "#,
         registry = registry
@@ -81,8 +91,9 @@ impl Generator for WebSysGen {
     {
         write_header(registry, dest)?;
         write_typedefs(registry, dest)?;
-        enums::write(registry, dest)?;
+        // enums::write(registry, dest)?;
         dicts::write(registry, dest)?;
+        interfaces::write(registry, dest)?;
         Ok(())
     }
 }

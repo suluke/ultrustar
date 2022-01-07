@@ -17,11 +17,21 @@ web-sys = { version = "0.3", features = [
   "HtmlCanvasElement",
   "HtmlElement",
   "Node",
+  "WebGlActiveInfo",
+  "WebGlBuffer",
   "WebGlContextAttributes",
-  "WebGlRenderingContext",
+  "WebGlContextEvent",
+  "WebGlFramebuffer",
   "WebGlPowerPreference",
+  "WebGlProgram",
+  "WebGlRenderbuffer",
+  "WebGlRenderingContext",
+  "WebGlShader",
+  "WebGlShaderPrecisionFormat",
+  "WebGlTexture",
+  "WebGlUniformLocation",
   "Window"
 ] }
 
 [build-dependencies]
-webgl_generator_websys = { path = "../webgl_generator_websys", version = "0.1.0" }
+webgl_gen_websys2gles = { path = "../webgl_gen_websys2gles", version = "0.1.0" }

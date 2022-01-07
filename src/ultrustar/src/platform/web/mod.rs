@@ -25,5 +25,8 @@ pub fn render_into(parent: &Node) -> Result<(), JsValue> {
     gl::set_context(ctx);
     parent.append_child(&canvas.into())?;
 
+    gl::ClearColor(0.0, 0.0, 0.0, 0.0);
+    gl::Clear(WebGlRenderingContext::COLOR_BUFFER_BIT);
+
     Ok(())
 }

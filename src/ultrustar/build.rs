@@ -1,7 +1,7 @@
 use std::{fs::File, path::PathBuf};
 
 fn platform_web() {
-    use webgl_generator_websys::{Api, Exts, Registry, WebSysGen};
+    use webgl_gen_websys2gles::{Api, Exts, Registry, WebSysGen};
 
     let mut dest_dir = PathBuf::from(&std::env::var("CARGO_MANIFEST_DIR").unwrap());
     dest_dir.push("src/platform/web");
