@@ -9,7 +9,8 @@
   <script type="module">
     import ultrustar_init, { render_into } from './target/wasm32-unknown-unknown/debug/ultrustar.js';
     await ultrustar_init('target/wasm32-unknown-unknown/debug/ultrustar_bg.wasm');
-    render_into(document.body);
+    window.ULTRUSTAR = render_into(document.body);
+    ULTRUSTAR.resize(800, 400)
   </script>
 </body>
 
