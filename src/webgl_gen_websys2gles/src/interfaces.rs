@@ -23,7 +23,6 @@ where
     if interface.is_hidden {
         return Ok(());
     }
-    writeln!(dest, "// {}", name)?;
     if name.starts_with("WebGL") && name.ends_with("RenderingContext") {
         write_rendering_context(name, interface, registry, dest)?;
     } else if name == "GLContext" {
@@ -97,14 +96,13 @@ where
         "vertex_attrib4fv",
         "vertex_attrib_pointer",
     ];
-    const OPS_WRONG_TYPES: [&str; 7] = [
+    const OPS_WRONG_TYPES: [&str; 6] = [
         "GetAttachedShaders",
         "GetExtension",
         "GetFramebufferAttachmentParameter",
         "GetParameter",
         "GetSupportedExtensions",
         "GetVertexAttrib",
-        "GetVertexAttribOffset",
     ];
     for (name, members) in interface.collect_members(registry, &VisitOptions::default()) {
         for &member in &members {
@@ -120,17 +118,14 @@ where
                     let disabled = OPS_WRONG_TYPES.contains(&name.as_str())
                         || OPS_NOT_FOUND.contains(&name.to_snake_case().as_str());
                     if disabled {
-                        write!(
-                            dest,
-                            "#[allow(unused, non_snake_case)] pub fn {name}",
-                            name = name
-                        )?;
+                        writeln!(dest, "#[allow(unused, non_snake_case)]")?;
                     } else {
-                        write!(dest, "#[allow(non_snake_case)] pub fn {name}", name = name)?;
+                        writeln!(dest, "#[allow(non_snake_case)]")?;
                     }
+                    write!(dest, "pub fn {name}", name = name)?;
                     write_args(&op.args, registry, dest)?;
                     if let Some(retty) = &op.return_type {
-                        write!(dest, " -> {} ", types::stringify_return(retty, registry))?;
+                        write!(dest, " -> {}", types::stringify_return(retty, registry))?;
                     }
                     writeln!(dest, " {{")?;
                     if disabled {

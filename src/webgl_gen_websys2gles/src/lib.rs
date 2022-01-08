@@ -15,8 +15,20 @@ pub use webgl_generator::*;
 
 mod dicts;
 mod interfaces;
-// mod enums;
 mod types;
+
+#[cfg(not(debug_assertions))]
+fn write_dbginfo<W>(_registry: &Registry, _dest: &mut W) -> std::io::Result<()> {
+    Ok(())
+}
+#[cfg(debug_assertions)]
+fn write_dbginfo<W>(registry: &Registry, dest: &mut W) -> std::io::Result<()>
+where
+    W: std::io::Write,
+{
+    writeln!(dest, "// {:?}", registry)?;
+    Ok(())
+}
 
 fn write_header<W>(registry: &Registry, dest: &mut W) -> std::io::Result<()>
 where
@@ -24,15 +36,17 @@ where
 {
     writeln!(
         dest,
+        "// DO NOT CHANGE - THIS FILE IS GENERATED AUTOMATICALLY"
+    )?;
+    write_dbginfo(registry, dest)?;
+    writeln!(
+        dest,
         r#"
-// DO NOT CHANGE - THIS FILE IS GENERATED AUTOMATICALLY
-
-// {registry:?}
-
-#![allow(unused_imports)] // FIXME shouldn't be necessary
-use std::cell::{{Ref, RefCell}};
+use std::cell::RefCell;
 use wasm_bindgen::{{JsValue}};
-use web_sys::{{HtmlCanvasElement, WebGlRenderingContext}};
+use web_sys::WebGlRenderingContext;
+
+#[allow(unused_imports)]
 use js_sys::{{
     ArrayBuffer,
     JsString,
@@ -62,8 +76,7 @@ macro_rules! withctx {{
         }})
     }};
 }}
-"#,
-        registry = registry
+"#
     )?;
     Ok(())
 }
@@ -72,13 +85,16 @@ fn write_typedefs<W>(registry: &Registry, dest: &mut W) -> std::io::Result<()>
 where
     W: std::io::Write,
 {
+    let mut fixups = std::collections::BTreeMap::new();
+    fixups.insert("GLintptr", "f64");
+
     for (name, ty) in registry.iter_types(NamedType::as_typedef) {
-        writeln!(
-            dest,
-            r#"#[allow(dead_code)] pub type {name} = {ty};"#,
-            name = name,
-            ty = types::stringify_return(ty, registry)
-        )?;
+        let ty = if let Some(&fixup) = fixups.get(name.as_str()) {
+            fixup.to_owned()
+        } else {
+            types::stringify_return(ty, registry)
+        };
+        writeln!(dest, "pub type {name} = {ty};", name = name, ty = ty)?;
     }
     Ok(())
 }
@@ -91,7 +107,6 @@ impl Generator for WebSysGen {
     {
         write_header(registry, dest)?;
         write_typedefs(registry, dest)?;
-        // enums::write(registry, dest)?;
         dicts::write(registry, dest)?;
         interfaces::write(registry, dest)?;
         Ok(())
