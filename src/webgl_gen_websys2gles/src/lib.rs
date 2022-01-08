@@ -43,22 +43,9 @@ where
         dest,
         r#"
 use std::cell::RefCell;
-use wasm_bindgen::{{JsValue}};
+use js_sys::ArrayBuffer;
+use wasm_bindgen::JsValue;
 use web_sys::WebGlRenderingContext;
-
-#[allow(unused_imports)]
-use js_sys::{{
-    ArrayBuffer,
-    JsString,
-    Int8Array,
-    Uint8Array,
-    Int16Array,
-    Uint16Array,
-    Int32Array,
-    Uint32Array,
-    Float32Array,
-    Float64Array
-}};
 
 thread_local!(static CONTEXT: RefCell<Option<WebGlRenderingContext>> = RefCell::new(None));
 
@@ -88,14 +75,36 @@ where
     let mut fixups = std::collections::BTreeMap::new();
     fixups.insert("GLintptr", "f64");
 
+    writeln!(dest, "pub mod types {{")?;
+    writeln!(
+        dest,
+        r#"
+    use wasm_bindgen::JsValue;
+    #[allow(unused_imports)]
+    use js_sys::{{
+        ArrayBuffer,
+        JsString,
+        Int8Array,
+        Uint8Array,
+        Int16Array,
+        Uint16Array,
+        Int32Array,
+        Uint32Array,
+        Float32Array,
+        Float64Array
+    }};
+    "#
+    )?;
     for (name, ty) in registry.iter_types(NamedType::as_typedef) {
         let ty = if let Some(&fixup) = fixups.get(name.as_str()) {
             fixup.to_owned()
         } else {
             types::stringify_return(ty, registry)
         };
-        writeln!(dest, "pub type {name} = {ty};", name = name, ty = ty)?;
+        writeln!(dest, "    pub type {name} = {ty};", name = name, ty = ty)?;
     }
+    writeln!(dest, "}}")?;
+    writeln!(dest, "use types::*;")?;
     Ok(())
 }
 
