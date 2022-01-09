@@ -314,6 +314,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "anyhid"
+version = "0.1.0"
+
+[[package]]
 name = "anyhow"
 version = "1.0.44"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -718,6 +722,10 @@ dependencies = [
  "serde 1.0.130",
  "strsim 0.10.0",
 ]
+
+[[package]]
+name = "egui_anyhid_gl"
+version = "0.1.0"
 
 [[package]]
 name = "either"

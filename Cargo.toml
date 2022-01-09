@@ -1,7 +1,9 @@
 [workspace]
 members = [
-    "src/ultrustar",
+    "src/anyhid",
+    "src/egui_anyhid_gl",
     "src/gl_generator_websys",
+    "src/ultrustar",
     "src/websys_gles2",
     "xtask/checkit",
     "xtask/wasm",
