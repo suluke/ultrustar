@@ -1,5 +1,5 @@
 [package]
-name = "webgl_gen_websys2gles"
+name = "gl_generator_websys"
 version = "0.1.0"
 edition = "2021"
 

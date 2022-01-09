@@ -1,5 +1,5 @@
 [package]
-name = "websys2gles2"
+name = "websys_gles2"
 version = "0.1.0"
 edition = "2021"
 
@@ -25,4 +25,4 @@ web-sys = { version = "0.3", features = [
 ] }
 
 [build-dependencies]
-webgl_gen_websys2gles = { path = "../webgl_gen_websys2gles", version = "0.1.0" }
+gl_generator_websys = { path = "../gl_generator_websys", version = "0.1.0" }

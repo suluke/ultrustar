@@ -1,12 +1,12 @@
 [workspace]
 members = [
     "src/ultrustar",
-    "src/webgl_gen_websys2gles",
-    "src/websys2gles2",
+    "src/gl_generator_websys",
+    "src/websys_gles2",
     "xtask/checkit",
     "xtask/wasm",
 ]
 default-members = [
     "src/ultrustar",
-    "src/webgl_gen_websys2gles",
+    "src/gl_generator_websys",
 ]

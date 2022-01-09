@@ -1,6 +1,6 @@
 use std::{fs::File, path::PathBuf};
 
-use webgl_gen_websys2gles::{Api, Exts, Registry, WebSysGen};
+use gl_generator_websys::{Api, Exts, Registry, WebSysGen};
 
 fn main() {
     let mut dest_dir = PathBuf::from(&std::env::var("CARGO_MANIFEST_DIR").unwrap());
