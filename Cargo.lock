@@ -2527,7 +2527,7 @@ dependencies = [
  "js-sys",
  "wasm-bindgen",
  "web-sys",
- "webgl_gen_websys2gles",
+ "websys2gles2",
 ]
 
 [[package]]
@@ -2912,6 +2912,16 @@ checksum = "d0f807f7488d680893f7188aa09d7672a3a0a8461975a098a2edf0a52e3fee29"
 dependencies = [
  "lalrpop",
  "lalrpop-util",
+]
+
+[[package]]
+name = "websys2gles2"
+version = "0.1.0"
+dependencies = [
+ "js-sys",
+ "wasm-bindgen",
+ "web-sys",
+ "webgl_gen_websys2gles",
 ]
 
 [[package]]

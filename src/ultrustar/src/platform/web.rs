@@ -3,8 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use wasm_bindgen::{prelude::*, JsCast};
 use web_sys::{HtmlCanvasElement, Node, WebGlRenderingContext};
 
-#[path = "webgl_bindings.rs"]
-pub mod gl;
+pub use websys2gles2 as gl;
 
 fn window() -> web_sys::Window {
     web_sys::window().expect("no global `window` exists")
