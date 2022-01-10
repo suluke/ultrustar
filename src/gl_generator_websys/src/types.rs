@@ -1,4 +1,4 @@
-use webgl_generator::{NamedType, Primitive, Registry, Type, TypeKind};
+use webgl_generator::{NamedType, Registry, Type, TypeKind};
 
 enum PassBy {
     Val,
@@ -18,27 +18,13 @@ impl RustType {
                 ("ArrayBuffer".into(), PassBy::Ref)
             }
             TypeKind::CanvasElement => ("HtmlCanvasElement".into(), PassBy::Ref),
-            TypeKind::TypedArray(p) => (
-                match p {
-                    Primitive::Bool | Primitive::I64 | Primitive::U64 => {
-                        unimplemented!("Unsupported return type: TypedArray")
-                    }
-                    Primitive::I8 => "Int8Array",
-                    Primitive::U8 => "Uint8Array",
-                    Primitive::I16 => "Int16Array",
-                    Primitive::U16 => "Uint16Array",
-                    Primitive::I32 => "Int32Array",
-                    Primitive::U32 => "Uint32Array",
-                    Primitive::F32 => "Float32Array",
-                    Primitive::F64 => "Float64Array",
-                }
-                .into(),
-                PassBy::Ref,
-            ),
+            TypeKind::TypedArray(p) => (format!("[{}]", p.name()), PassBy::Ref),
             TypeKind::Sequence(ty) => (
                 format!("Vec<{}>", Self::from_idl(ty, registry).name),
                 PassBy::Ref,
             ),
+            // We mostly have Union(TypedArray | Sequence) which would map to &[PRIMITIVE] vs JsValue respectively in web_sys.
+            // The latter is obviously not used in OpenGL so we flatten the Union to TypedArray only.
             TypeKind::Union(tys) => (
                 tys.iter()
                     .find(|&ty| matches!(&ty.kind, TypeKind::TypedArray(_)))

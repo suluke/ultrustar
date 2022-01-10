@@ -74,27 +74,10 @@ where
 {
     let mut fixups = std::collections::BTreeMap::new();
     fixups.insert("GLintptr", "f64");
+    fixups.insert("GLsizeiptr", "f64");
 
     writeln!(dest, "pub mod types {{")?;
-    writeln!(
-        dest,
-        r#"
-    use wasm_bindgen::JsValue;
-    #[allow(unused_imports)]
-    use js_sys::{{
-        ArrayBuffer,
-        JsString,
-        Int8Array,
-        Uint8Array,
-        Int16Array,
-        Uint16Array,
-        Int32Array,
-        Uint32Array,
-        Float32Array,
-        Float64Array
-    }};
-    "#
-    )?;
+    writeln!(dest, "    use wasm_bindgen::JsValue;")?;
     for (name, ty) in registry.iter_types(NamedType::as_typedef) {
         let ty = if let Some(&fixup) = fixups.get(name.as_str()) {
             fixup.to_owned()
