@@ -91,16 +91,28 @@ fn get_websys_function_name(name: &str, op: &Operation, registry: &Registry) -> 
             } else {
                 None
             }
+        } else if matches!(
+            &arg.type_.kind,
+            TypeKind::ArrayBufferView | TypeKind::BufferSource
+        ) {
+            if arg.type_.optional {
+                Some("opt_u8")
+            } else {
+                Some("u8")
+            }
         } else {
             None
         }
     });
     let mut result = name.to_snake_case().replace("2_d", "_2d");
+    let mut conj_gen = Some("_with").iter().chain(Some("_and").iter().cycle());
     if has_pointer_arg {
-        result += "_with_f64";
+        result += conj_gen.next().unwrap();
+        result += "_f64";
     }
     if let Some(buff_ty) = has_buffer_arg {
-        result += &format!("_with_{}_array", buff_ty);
+        result += conj_gen.next().unwrap();
+        result += &format!("_{}_array", buff_ty);
     }
     result
 }
@@ -114,19 +126,14 @@ fn write_rendering_context<W>(
 where
     W: std::io::Write,
 {
-    const OPS_NOT_FOUND: [&str; 4] = [
-        "buffer_sub_data_with_f64",
-        "compressed_tex_image_2d",
-        "compressed_tex_sub_image_2d",
-        "read_pixels",
-    ];
-    const OPS_WRONG_TYPES: [&str; 6] = [
+    const OPS_WRONG_TYPES: [&str; 7] = [
         "GetAttachedShaders",
         "GetExtension",
         "GetFramebufferAttachmentParameter",
         "GetParameter",
         "GetSupportedExtensions",
         "GetVertexAttrib",
+        "ReadPixels",
     ];
     for (name, members) in interface.collect_members(registry, &VisitOptions::default()) {
         for &member in &members {
@@ -139,14 +146,13 @@ where
                 .map(heck::ToUpperCamelCase::to_upper_camel_case);
                 if let Some(name) = &name {
                     let websys_name = get_websys_function_name(name, op, registry);
-                    let disabled = OPS_WRONG_TYPES.contains(&name.as_str())
-                        || OPS_NOT_FOUND.contains(&websys_name.as_str());
+                    let disabled = OPS_WRONG_TYPES.contains(&name.as_str());
                     if disabled {
                         writeln!(dest, "#[allow(unused, non_snake_case)]")?;
                     } else {
                         writeln!(dest, "#[allow(non_snake_case)]")?;
                     }
-                    write!(dest, "pub fn {name}", name = name)?;
+                    write!(dest, "pub unsafe fn {name}", name = name)?;
                     write_args(&op.args, registry, dest)?;
                     if let Some(retty) = &op.return_type {
                         write!(dest, " -> {}", types::stringify_return(retty, registry))?;

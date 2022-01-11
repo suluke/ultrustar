@@ -37,8 +37,11 @@ fn create_canvas() -> Result<HtmlCanvasElement, JsValue> {
 fn create_main_loop(game: &Rc<RefCell<Instance>>) -> Closure<dyn FnMut()> {
     let game = game.clone();
     Closure::wrap(Box::new(move || {
-        gl::ClearColor(0.0, 0.0, 0.0, 1.0);
-        gl::Clear(WebGlRenderingContext::COLOR_BUFFER_BIT);
+        #[allow(unsafe_code)]
+        unsafe {
+            gl::ClearColor(0.0, 0.0, 0.0, 1.0);
+            gl::Clear(WebGlRenderingContext::COLOR_BUFFER_BIT);
+        }
         let mut game = game.borrow_mut();
         if let Some(next) = game.main_loop.as_ref() {
             game.raf_handle = request_animation_frame(next);

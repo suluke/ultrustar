@@ -43,7 +43,6 @@ where
         dest,
         r#"
 use std::cell::RefCell;
-use js_sys::ArrayBuffer;
 use wasm_bindgen::JsValue;
 use web_sys::WebGlRenderingContext;
 
