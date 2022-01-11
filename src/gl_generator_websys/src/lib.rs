@@ -62,6 +62,24 @@ macro_rules! withctx {{
         }})
     }};
 }}
+
+struct Error {{
+    #[allow(unused)]
+    details: JsValue
+}}
+thread_local!(static ERROR: RefCell<Option<Error>> = RefCell::new(None));
+trait HandleJsError {{
+    type Output;
+    fn handle_js_error(self);
+}}
+impl<T> HandleJsError for Result<T, JsValue> {{
+    type Output = T;
+    fn handle_js_error(self) {{
+        if let Err(details) = self {{
+            ERROR.with(|err| *err.borrow_mut() = Some(Error{{details}}));
+        }}
+    }}
+}}
 "#
     )?;
     Ok(())

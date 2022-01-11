@@ -1,6 +1,6 @@
 use super::types;
 use webgl_generator::{
-    Argument, Interface, Member, NamedType, Operation, Registry, TypeKind, VisitOptions,
+    Argument, Interface, Member, NamedType, Operation, Registry, Type, TypeKind, VisitOptions,
 };
 
 pub fn write<W>(registry: &Registry, dest: &mut W) -> std::io::Result<()>
@@ -126,14 +126,17 @@ fn write_rendering_context<W>(
 where
     W: std::io::Write,
 {
-    const OPS_WRONG_TYPES: [&str; 7] = [
+    const FALLIBLE_RESULTS: [&str; 1] = ["ReadPixels"];
+    const OPS_WRONG_TYPES: [&str; 6] = [
+        // Needs Array -> Vec unwrapping
         "GetAttachedShaders",
-        "GetExtension",
-        "GetFramebufferAttachmentParameter",
-        "GetParameter",
         "GetSupportedExtensions",
+        // Not in regular GLES
+        "GetExtension",
+        "GetParameter",
+        // Need output parameter and multiple type overloads
+        "GetFramebufferAttachmentParameter",
         "GetVertexAttrib",
-        "ReadPixels",
     ];
     for (name, members) in interface.collect_members(registry, &VisitOptions::default()) {
         for &member in &members {
@@ -154,9 +157,7 @@ where
                     }
                     write!(dest, "pub unsafe fn {name}", name = name)?;
                     write_args(&op.args, registry, dest)?;
-                    if let Some(retty) = &op.return_type {
-                        write!(dest, " -> {}", types::stringify_return(retty, registry))?;
-                    }
+                    write_return(op.return_type.as_ref(), registry, dest)?;
                     writeln!(dest, " {{")?;
                     if disabled {
                         #[cfg(debug_assertions)]
@@ -166,6 +167,9 @@ where
                         write!(dest, "    withctx!(CONTEXT, ctx, {{ctx.{}", websys_name)?;
                         write_params(&op.args, dest)?;
                         writeln!(dest, "}})")?;
+                        if FALLIBLE_RESULTS.contains(&name.as_str()) {
+                            writeln!(dest, "    .handle_js_error()")?;
+                        }
                     }
                     writeln!(dest, "}}")?;
                 }
@@ -216,6 +220,20 @@ where
     write!(dest, "{}", ident)?;
     if is_keyword(ident) {
         write!(dest, "_")?;
+    }
+    Ok(())
+}
+
+fn write_return<W>(
+    return_type: Option<&Type>,
+    registry: &Registry,
+    dest: &mut W,
+) -> std::io::Result<()>
+where
+    W: std::io::Write,
+{
+    if let Some(retty) = return_type {
+        write!(dest, " -> {}", types::stringify_return(retty, registry))?;
     }
     Ok(())
 }

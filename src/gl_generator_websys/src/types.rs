@@ -14,8 +14,9 @@ impl RustType {
         let (name, pass_by) = match &ty.kind {
             TypeKind::Primitive(p) => (p.name().into(), PassBy::Val),
             TypeKind::String => ("String".into(), PassBy::Ref),
-            TypeKind::ArrayBufferView => ("mut [u8]".into(), PassBy::Ref),
-            TypeKind::ArrayBuffer | TypeKind::BufferSource => ("mut [u8]".into(), PassBy::Ref),
+            TypeKind::ArrayBuffer | TypeKind::ArrayBufferView | TypeKind::BufferSource => {
+                ("mut [u8]".into(), PassBy::Ref)
+            }
             TypeKind::CanvasElement => ("HtmlCanvasElement".into(), PassBy::Ref),
             TypeKind::TypedArray(p) => (format!("[{}]", p.name()), PassBy::Ref),
             TypeKind::Sequence(ty) => (
