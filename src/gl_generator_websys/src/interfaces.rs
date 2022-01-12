@@ -127,10 +127,7 @@ where
     W: std::io::Write,
 {
     const FALLIBLE_RESULTS: [&str; 1] = ["ReadPixels"];
-    const OPS_WRONG_TYPES: [&str; 6] = [
-        // Needs Array -> Vec unwrapping
-        "GetAttachedShaders",
-        "GetSupportedExtensions",
+    const OPS_WRONG_TYPES: [&str; 4] = [
         // Not in regular GLES
         "GetExtension",
         "GetParameter",
@@ -157,7 +154,7 @@ where
                     }
                     write!(dest, "pub unsafe fn {name}", name = name)?;
                     write_args(&op.args, registry, dest)?;
-                    write_return(op.return_type.as_ref(), registry, dest)?;
+                    write_return_signature(op.return_type.as_ref(), registry, dest)?;
                     writeln!(dest, " {{")?;
                     if disabled {
                         #[cfg(debug_assertions)]
@@ -169,6 +166,9 @@ where
                         writeln!(dest, "}})")?;
                         if FALLIBLE_RESULTS.contains(&name.as_str()) {
                             writeln!(dest, "    .handle_js_error()")?;
+                        }
+                        if let Some(retty) = &op.return_type {
+                            write_result_conversion(retty, registry, dest)?;
                         }
                     }
                     writeln!(dest, "}}")?;
@@ -224,7 +224,7 @@ where
     Ok(())
 }
 
-fn write_return<W>(
+fn write_return_signature<W>(
     return_type: Option<&Type>,
     registry: &Registry,
     dest: &mut W,
@@ -234,6 +234,40 @@ where
 {
     if let Some(retty) = return_type {
         write!(dest, " -> {}", types::stringify_return(retty, registry))?;
+    }
+    Ok(())
+}
+
+/// Adds conversion code if necessary in case `web_sys` returns web-native objects instead of rust-native ones.
+/// E.g. `JsString -> String` or `Array -> Vec`
+fn write_result_conversion<W>(
+    retty: &Type,
+    registry: &Registry,
+    dest: &mut W,
+) -> std::io::Result<()>
+where
+    W: std::io::Write,
+{
+    if let TypeKind::Sequence(ty) = &retty.kind {
+        let ty_name = types::stringify_return(ty, registry);
+        let convert = if let TypeKind::String = ty.kind {
+            "unchecked_into::<js_sys::JsString>().as_string().unwrap()".to_owned()
+        } else {
+            format!("unchecked_into::<{}>()", ty_name)
+        };
+        if retty.optional {
+            writeln!(
+                dest,
+                "    .map(|some| some.iter().map(|val| val.{}).collect::<Vec<_>>())",
+                convert
+            )?;
+        } else {
+            writeln!(
+                dest,
+                "    .iter().map(|val| val.{}).collect::<Vec<_>>()",
+                convert
+            )?;
+        }
     }
     Ok(())
 }

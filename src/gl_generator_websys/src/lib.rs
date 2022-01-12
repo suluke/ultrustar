@@ -43,7 +43,7 @@ where
         dest,
         r#"
 use std::cell::RefCell;
-use wasm_bindgen::JsValue;
+use wasm_bindgen::{{JsCast, JsValue}};
 use web_sys::WebGlRenderingContext;
 
 thread_local!(static CONTEXT: RefCell<Option<WebGlRenderingContext>> = RefCell::new(None));
