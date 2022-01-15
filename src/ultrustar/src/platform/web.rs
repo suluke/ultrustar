@@ -1,7 +1,13 @@
+use super::PlatformApi;
 use js_sys::{Boolean, JsString, Map};
 use std::{cell::RefCell, rc::Rc};
 use wasm_bindgen::{prelude::*, JsCast};
 use web_sys::{HtmlCanvasElement, Node, WebGlRenderingContext};
+use winit::{
+    event::Event,
+    event_loop::{ControlFlow, EventLoop, EventLoopWindowTarget},
+    window::{Window, WindowBuilder},
+};
 
 pub use websys_gles2 as gl;
 
@@ -34,14 +40,10 @@ fn create_canvas() -> Result<HtmlCanvasElement, JsValue> {
 
 /// Creates and starts a self-repeating
 //
-fn create_main_loop(game: &Rc<RefCell<Instance>>) -> Closure<dyn FnMut()> {
+#[allow(unused)]
+fn create_main_loop(game: &Platform) -> Closure<dyn FnMut()> {
     let game = game.clone();
     Closure::wrap(Box::new(move || {
-        #[allow(unsafe_code)]
-        unsafe {
-            gl::ClearColor(0.0, 0.0, 0.0, 1.0);
-            gl::Clear(WebGlRenderingContext::COLOR_BUFFER_BIT);
-        }
         let mut game = game.borrow_mut();
         if let Some(next) = game.main_loop.as_ref() {
             game.raf_handle = request_animation_frame(next);
@@ -49,13 +51,27 @@ fn create_main_loop(game: &Rc<RefCell<Instance>>) -> Closure<dyn FnMut()> {
     }) as Box<dyn FnMut()>)
 }
 
-struct Instance {
+pub struct PlatformImpl {
+    event_loop: Option<EventLoop<()>>,
+    _window: Window,
     main_loop: Option<Closure<dyn FnMut()>>,
     raf_handle: i32,
     canvas: HtmlCanvasElement,
 }
-impl Instance {
-    fn new(canvas: HtmlCanvasElement) -> Result<Rc<RefCell<Self>>, JsValue> {
+pub type Platform = Rc<RefCell<PlatformImpl>>;
+
+pub struct Settings {
+    mount_point: Node,
+}
+
+impl PlatformApi for Platform {
+    type Settings = Settings;
+    type Renderer = crate::core::gfx::gl::RendererES2;
+    type InitError = JsValue;
+
+    fn init(settings: Self::Settings) -> Result<Self, Self::InitError> {
+        let canvas = create_canvas()?;
+        settings.mount_point.append_child(canvas.unchecked_ref())?;
         let ctx_opts = Map::new();
         ctx_opts.set(&JsString::from("depth"), &Boolean::from(false));
         let ctx: WebGlRenderingContext = canvas
@@ -63,24 +79,47 @@ impl Instance {
             .unwrap()
             .dyn_into()?;
         gl::set_context(ctx);
-        let instance = Rc::new(RefCell::new(Self {
+
+        let event_loop = EventLoop::new();
+        use winit::platform::web::WindowBuilderExtWebSys;
+        let window = WindowBuilder::new()
+            .with_canvas(Some(canvas.clone()))
+            .with_title("A fantastic window!")
+            .build(&event_loop)
+            .unwrap();
+
+        let instance = Rc::new(RefCell::new(PlatformImpl {
+            event_loop: Some(event_loop),
+            _window: window,
             canvas,
             raf_handle: 0,
             main_loop: None,
         }));
-        let main_loop = create_main_loop(&instance);
-        {
-            let mut instance = instance.borrow_mut();
-            instance.raf_handle = request_animation_frame(&main_loop);
-            instance.main_loop = Some(main_loop);
-        }
+        // TODO haven't figured out yet how to make winit play with requestAnimationFrame
+        // let main_loop = create_main_loop(&instance);
+        // {
+        //     let mut instance = instance.borrow_mut();
+        //     instance.raf_handle = request_animation_frame(&main_loop);
+        //     instance.main_loop = Some(main_loop);
+        // }
+
         Ok(instance)
+    }
+    fn run<F>(self, main_loop: F)
+    where
+        F: 'static + FnMut(Event<'_, ()>, &EventLoopWindowTarget<()>, &mut ControlFlow),
+    {
+        self.borrow_mut().event_loop.take().unwrap().run(main_loop);
+    }
+
+    fn create_renderer(&self) -> Self::Renderer {
+        todo!();
     }
 }
 
 #[wasm_bindgen]
 pub struct Api {
-    instance: Rc<RefCell<Instance>>,
+    instance: Platform,
 }
 #[wasm_bindgen]
 impl Api {
@@ -97,8 +136,11 @@ impl Api {
 }
 
 #[wasm_bindgen]
-pub fn render_into(parent: &Node) -> Result<Api, JsValue> {
-    let canvas = create_canvas()?;
-    parent.append_child(canvas.unchecked_ref())?;
-    Instance::new(canvas).map(|instance| Api { instance })
+pub fn render_into(parent: Node) -> Result<Api, JsValue> {
+    let settings = Settings {
+        mount_point: parent,
+    };
+    let pf = Platform::init(settings).unwrap();
+    crate::core::run(pf.clone());
+    Ok(Api { instance: pf })
 }

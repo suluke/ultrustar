@@ -118,7 +118,7 @@ fn get_websys_function_name(name: &str, op: &Operation, registry: &Registry) -> 
 }
 
 fn write_rendering_context<W>(
-    _name: &str,
+    ctx_ty_name: &str,
     interface: &Interface,
     registry: &Registry,
     dest: &mut W,
@@ -173,6 +173,14 @@ where
                     }
                     writeln!(dest, "}}")?;
                 }
+            } else if let Member::Const(constant) = member {
+                writeln!(
+                    dest,
+                    "pub const {constant}: {ty} = web_sys::{name}::{constant};",
+                    name = ctx_ty_name.replace("WebGL", "WebGl"),
+                    constant = name,
+                    ty = types::stringify_return(&constant.type_, registry)
+                )?;
             }
         }
     }

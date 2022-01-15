@@ -2,10 +2,27 @@
 name = "ultrustar"
 version = "0.1.0"
 edition = "2021"
+default-run = "ultrustar"
 
 [lib]
-name = "ultrastar_core"
+name = "ultrustar_core"
+path = "src/lib.rs"
 crate-type = ["cdylib"]
+
+[[bin]]
+name = "ultrustar"
+path = "src/main.rs"
+
+[dependencies]
+# Audio
+cpal = "0.13"
+# Game controllers
+gilrs = { version = "0.8", features = ["wasm-bindgen"] }
+# Windowing + Event Loop
+winit = "0.26"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+gl = "0.14.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 websys_gles2 = { path = "../websys_gles2", version = "0.1.0" }

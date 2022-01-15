@@ -9,4 +9,5 @@
     clippy::suspicious
 )]
 
-pub mod platform;
+mod core;
+pub use self::core::*;

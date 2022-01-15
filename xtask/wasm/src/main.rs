@@ -74,7 +74,7 @@ fn build(args: &Cli) -> Result<()> {
     }
     .run()?;
     let mut wasm_path = target_dir(args)?;
-    wasm_path.push("ultrastar_core.wasm");
+    wasm_path.push("ultrustar_core.wasm");
     let mut builder = Bindgen::new();
 
     builder
