@@ -1,7 +1,4 @@
-use winit::{
-    event::Event,
-    event_loop::{ControlFlow, EventLoopWindowTarget},
-};
+use winit::{event::Event, event_loop::EventLoopWindowTarget};
 
 /// Documentation trait for what APIs a platform implementation needs to expose
 #[allow(clippy::module_name_repetitions)]
@@ -25,7 +22,7 @@ pub trait PlatformApi: Sized {
     /// Allow hooking into the event loop
     fn run<F>(self, main_loop: F)
     where
-        F: 'static + FnMut(Event<'_, ()>, &EventLoopWindowTarget<()>, &mut ControlFlow);
+        F: 'static + FnMut(&Event<'_, ()>, &EventLoopWindowTarget<()>);
 
     /// Create a renderer instance
     fn create_renderer(&self) -> Self::Renderer;

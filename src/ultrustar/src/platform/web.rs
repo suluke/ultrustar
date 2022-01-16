@@ -5,7 +5,7 @@ use wasm_bindgen::{prelude::*, JsCast};
 use web_sys::{HtmlCanvasElement, Node, WebGlRenderingContext};
 use winit::{
     event::Event,
-    event_loop::{ControlFlow, EventLoop, EventLoopWindowTarget},
+    event_loop::{EventLoop, EventLoopWindowTarget},
     window::{Window, WindowBuilder},
 };
 
@@ -105,11 +105,15 @@ impl PlatformApi for Platform {
 
         Ok(instance)
     }
-    fn run<F>(self, main_loop: F)
+    fn run<F>(self, mut main_loop: F)
     where
-        F: 'static + FnMut(Event<'_, ()>, &EventLoopWindowTarget<()>, &mut ControlFlow),
+        F: 'static + FnMut(&Event<'_, ()>, &EventLoopWindowTarget<()>),
     {
-        self.borrow_mut().event_loop.take().unwrap().run(main_loop);
+        self.borrow_mut()
+            .event_loop
+            .take()
+            .unwrap()
+            .run(move |ev, tgt, _| main_loop(&ev, tgt));
     }
 
     fn create_renderer(&self) -> Self::Renderer {

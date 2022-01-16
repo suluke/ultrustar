@@ -10,7 +10,8 @@ use platform::{Platform, PlatformApi};
 
 /// Cross-platform `main` function
 pub fn run(platform: Platform) {
-    platform.run(move |_, _, _| {
+    platform.run(move |_, _| {
+        println!("Clear");
         #[allow(unsafe_code)]
         unsafe {
             gl::ClearColor(0.0, 0.0, 0.0, 1.0);
