@@ -20,10 +20,13 @@ cpal = "0.13"
 gilrs = { version = "0.8", features = ["wasm-bindgen"] }
 # Windowing + Event Loop
 winit = "0.26"
+# Settings
+serde = "1.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 gl = "0.14.0"
 glutin = "0.28"
+directories = "4.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 websys_gles2 = { path = "../websys_gles2", version = "0.1.0" }

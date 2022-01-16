@@ -7,10 +7,16 @@ pub trait PlatformApi: Sized {
     type Settings;
 
     /// The (possibly polymorphic) type of renderer to be used
-    type Renderer;
+    type Renderer: crate::gfx::Renderer;
 
     /// Representation of errors that may occur during initialization
     type InitError;
+
+    /// Load user data from persistent storage
+    fn load_userdata() -> crate::UserData;
+
+    /// Store user data to persistent storage
+    fn persist_userdata(data: &crate::UserData);
 
     /// Initializes (instantiates) the platform
     ///

@@ -19,6 +19,14 @@ impl super::PlatformApi for Platform {
     type Renderer = crate::gfx::gl::RendererES2;
     type InitError = ();
 
+    fn load_userdata() -> crate::UserData {
+        todo!()
+    }
+
+    fn persist_userdata(_data: &crate::UserData) {
+        todo!()
+    }
+
     fn init(_settings: Self::Settings) -> Result<Self, Self::InitError> {
         let event_loop = EventLoop::new();
         let window = WindowBuilder::new().with_title("Ultrustar");
@@ -36,10 +44,6 @@ impl super::PlatformApi for Platform {
         })
     }
 
-    fn create_renderer(&self) -> Self::Renderer {
-        Self::Renderer {}
-    }
-
     fn run<F>(self, mut main_loop: F)
     where
         F: 'static
@@ -52,5 +56,9 @@ impl super::PlatformApi for Platform {
                 self.window.swap_buffers().unwrap();
             }
         });
+    }
+
+    fn create_renderer(&self) -> Self::Renderer {
+        Self::Renderer {}
     }
 }

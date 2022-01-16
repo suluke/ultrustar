@@ -115,6 +115,12 @@ impl PlatformApi for Platform {
             .unwrap()
             .run(move |ev, tgt, _| main_loop(&ev, tgt));
     }
+    fn load_userdata() -> crate::UserData {
+        todo!();
+    }
+    fn persist_userdata(_data: &crate::UserData) {
+        todo!();
+    }
 
     fn create_renderer(&self) -> Self::Renderer {
         todo!();
