@@ -13,10 +13,18 @@ pub trait PlatformApi: Sized {
     type InitError;
 
     /// Load user data from persistent storage
-    fn load_userdata() -> crate::UserData;
+    ///
+    /// # Errors
+    ///
+    /// In case user data cannot be loaded and requested user is not "default", either.
+    fn load_userdata(id: &str) -> Result<crate::UserData, anyhow::Error>;
 
     /// Store user data to persistent storage
-    fn persist_userdata(data: &crate::UserData);
+    ///
+    /// # Errors
+    ///
+    /// In case I/O failed
+    fn persist_userdata(data: &crate::UserData) -> Result<(), anyhow::Error>;
 
     /// Initializes (instantiates) the platform
     ///

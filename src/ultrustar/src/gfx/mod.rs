@@ -4,10 +4,7 @@ pub trait Renderer: Sized {
     type InitSettings: crate::SettingsTrait;
 
     /// Error which may occur during initialization
-    type InitError: std::fmt::Debug;
-
-    /// TODO Replace with instance deserialized from user data once user data persistency is implemented
-    fn cfg() -> Self::InitSettings;
+    type InitError: std::error::Error;
 
     /// Create the Renderer
     ///

@@ -1,19 +1,23 @@
+use std::fmt::Display;
+
 use crate::platform::gl;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct InitSettings;
 impl crate::SettingsTrait for InitSettings {}
 
 #[derive(Debug)]
 pub struct InitError;
+impl Display for InitError {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        todo!()
+    }
+}
+impl std::error::Error for InitError {}
 pub struct Renderer;
 
 impl crate::gfx::Renderer for Renderer {
-    fn cfg() -> Self::InitSettings {
-        InitSettings
-    }
-
     type InitSettings = InitSettings;
 
     type InitError = InitError;

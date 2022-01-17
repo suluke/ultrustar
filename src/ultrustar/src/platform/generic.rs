@@ -1,3 +1,7 @@
+use anyhow::anyhow;
+use std::{fs::File, path::PathBuf};
+
+use directories::ProjectDirs;
 use glutin::{ContextWrapper, PossiblyCurrent};
 use winit::{
     event::Event,
@@ -7,11 +11,21 @@ use winit::{
 
 pub use gl;
 
+use crate::UserData;
+
 pub struct Settings;
 
 pub struct Platform {
     window: ContextWrapper<PossiblyCurrent, Window>,
     event_loop: EventLoop<()>,
+}
+fn get_userdata_path(user_id: &str) -> Result<PathBuf, anyhow::Error> {
+    let proj_dirs = ProjectDirs::from("io.github", "suluke", "ultrustar")
+        .ok_or_else(|| anyhow!("Failed to retrieve application directories"))?;
+
+    let mut dest = proj_dirs.config_dir().to_owned();
+    dest.push(format!("{}_user.json", user_id));
+    Ok(dest)
 }
 impl super::PlatformApi for Platform {
     type Settings = Settings;
@@ -19,12 +33,30 @@ impl super::PlatformApi for Platform {
     type Renderer = crate::gfx::gl::RendererES2;
     type InitError = ();
 
-    fn load_userdata() -> crate::UserData {
-        todo!()
+    fn load_userdata(id: &str) -> Result<crate::UserData, anyhow::Error> {
+        match File::open(get_userdata_path(id)?) {
+            Ok(src) => {
+                serde_json::from_reader::<_, crate::UserData>(src).map_err(anyhow::Error::from)
+            }
+            Err(err) => {
+                if id == "default" && matches!(err.kind(), std::io::ErrorKind::NotFound) {
+                    Ok(UserData::default())
+                } else {
+                    Err(anyhow::Error::from(err))
+                }
+            }
+        }
     }
 
-    fn persist_userdata(_data: &crate::UserData) {
-        todo!()
+    fn persist_userdata(data: &crate::UserData) -> Result<(), anyhow::Error> {
+        let dest = get_userdata_path(&data.user.id)?;
+        let dest = std::fs::File::create(dest)?;
+
+        #[cfg(not(debug_assertions))]
+        serde_json::to_writer_pretty(dest, data);
+        #[cfg(debug_assertions)]
+        serde_json::to_writer(dest, data)?;
+        Ok(())
     }
 
     fn init(_settings: Self::Settings) -> Result<Self, Self::InitError> {

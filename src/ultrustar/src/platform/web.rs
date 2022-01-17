@@ -115,10 +115,10 @@ impl PlatformApi for Platform {
             .unwrap()
             .run(move |ev, tgt, _| main_loop(&ev, tgt));
     }
-    fn load_userdata() -> crate::UserData {
-        todo!();
+    fn load_userdata(id: &str) -> Result<crate::UserData, anyhow::Error> {
+        Ok(crate::UserData::default())
     }
-    fn persist_userdata(_data: &crate::UserData) {
+    fn persist_userdata(_data: &crate::UserData) -> Result<(), anyhow::Error> {
         todo!();
     }
 
