@@ -1,23 +1,22 @@
+use crate::{Event, EventLoop, Signals, UserData};
 use anyhow::anyhow;
-use std::{fs::File, path::PathBuf};
-
 use directories::ProjectDirs;
 use glutin::{ContextWrapper, PossiblyCurrent};
+use log::info;
+use std::{fs::File, path::PathBuf};
 use winit::{
-    event::Event,
-    event_loop::{ControlFlow, EventLoop},
+    event::WindowEvent,
+    event_loop::{ControlFlow, EventLoopWindowTarget},
     window::{Window, WindowBuilder},
 };
 
 pub use gl;
 
-use crate::UserData;
-
 pub struct Settings;
 
 pub struct Platform {
     window: ContextWrapper<PossiblyCurrent, Window>,
-    event_loop: EventLoop<()>,
+    event_loop: EventLoop,
 }
 fn get_userdata_path(user_id: &str) -> Result<PathBuf, anyhow::Error> {
     let proj_dirs = ProjectDirs::from("io.github", "suluke", "ultrustar")
@@ -60,7 +59,7 @@ impl super::PlatformApi for Platform {
     }
 
     fn init(_settings: Self::Settings) -> Result<Self, Self::InitError> {
-        let event_loop = EventLoop::new();
+        let event_loop = EventLoop::with_user_event();
         let window = WindowBuilder::new().with_title("Ultrustar");
         let gl_window = glutin::ContextBuilder::new()
             .build_windowed(window, &event_loop)
@@ -78,13 +77,23 @@ impl super::PlatformApi for Platform {
 
     fn run<F>(self, mut main_loop: F)
     where
-        F: 'static
-            + FnMut(&winit::event::Event<'_, ()>, &winit::event_loop::EventLoopWindowTarget<()>),
+        F: 'static + FnMut(&Event<'_>, &EventLoopWindowTarget<Signals>),
     {
         self.event_loop.run(move |ev, tgt, control_flow| {
             *control_flow = ControlFlow::Wait;
+            if matches!(
+                &ev,
+                Event::UserEvent(Signals::Exit)
+                    | Event::WindowEvent {
+                        event: WindowEvent::CloseRequested,
+                        ..
+                    }
+            ) {
+                info!("Received exit event");
+                *control_flow = ControlFlow::Exit;
+            }
             main_loop(&ev, tgt);
-            if matches!(ev, Event::RedrawRequested(_)) {
+            if matches!(&ev, Event::RedrawRequested(_)) {
                 self.window.swap_buffers().unwrap();
             }
         });

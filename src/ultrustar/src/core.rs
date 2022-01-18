@@ -26,6 +26,13 @@ impl Default for User {
     }
 }
 
+#[allow(unused)]
+pub enum Signals {
+    Exit,
+}
+pub type EventLoop = winit::event_loop::EventLoop<Signals>;
+pub type Event<'a> = winit::event::Event<'a, Signals>;
+
 #[derive(Default, Serialize, Deserialize)]
 pub struct UserData {
     user: User,
@@ -41,8 +48,10 @@ pub fn run(platform: Platform) {
     (|| -> anyhow::Result<()> {
         let userdata = Platform::load_userdata("default")?;
         let renderer = Renderer::new(userdata.gfx)?;
-        platform.run(move |_, _| {
-            renderer.render();
+        platform.run(move |event, _| {
+            if let Event::RedrawRequested(_) = event {
+                renderer.render();
+            }
         });
         Ok(())
     })()
