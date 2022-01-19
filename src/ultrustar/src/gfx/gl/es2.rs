@@ -22,7 +22,7 @@ impl crate::gfx::Renderer for Renderer {
 
     type InitError = InitError;
 
-    fn new(_settings: Self::InitSettings) -> Result<Self, Self::InitError> {
+    fn new(_settings: &Self::InitSettings) -> Result<Self, Self::InitError> {
         Ok(Self)
     }
 

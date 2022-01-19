@@ -47,11 +47,15 @@ pub fn run(platform: Platform) {
     // wrap code in IIFE to write any errors to log before panicing
     (|| -> anyhow::Result<()> {
         let userdata = Platform::load_userdata("default")?;
-        let renderer = Renderer::new(userdata.gfx)?;
-        platform.run(move |event, _| {
-            if let Event::RedrawRequested(_) = event {
+        let renderer = Renderer::new(&userdata.gfx)?;
+        platform.run(move |event, _| match event {
+            Event::RedrawRequested(_) => {
                 renderer.render();
             }
+            Event::UserEvent(Signals::Exit) => {
+                Platform::persist_userdata(&userdata).expect("Persisting settings failed");
+            }
+            _ => (),
         });
         Ok(())
     })()

@@ -79,7 +79,7 @@ impl super::PlatformApi for Platform {
     where
         F: 'static + FnMut(&Event<'_>, &EventLoopWindowTarget<Signals>),
     {
-        self.event_loop.run(move |ev, tgt, control_flow| {
+        self.event_loop.run(move |mut ev, tgt, control_flow| {
             *control_flow = ControlFlow::Wait;
             if matches!(
                 &ev,
@@ -91,6 +91,9 @@ impl super::PlatformApi for Platform {
             ) {
                 info!("Received exit event");
                 *control_flow = ControlFlow::Exit;
+                // Clients should be able to react to shutdown, but it makes no sense
+                // to have more than one event to signal that.
+                ev = Event::UserEvent(Signals::Exit);
             }
             main_loop(&ev, tgt);
             if matches!(&ev, Event::RedrawRequested(_)) {

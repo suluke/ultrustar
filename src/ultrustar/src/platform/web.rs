@@ -1,16 +1,53 @@
 use super::PlatformApi;
 use crate::{Event, EventLoop, Signals};
+use anyhow::anyhow;
 use js_sys::{Boolean, JsString, Map};
 use log::info;
 use std::{cell::RefCell, rc::Rc};
 use wasm_bindgen::{prelude::*, JsCast};
-use web_sys::{HtmlCanvasElement, Node, WebGlRenderingContext};
+use web_sys::{HtmlCanvasElement, Node, Storage, WebGlRenderingContext};
 use winit::{
     event_loop::{ControlFlow, EventLoopClosed, EventLoopProxy, EventLoopWindowTarget},
     window::{Window, WindowBuilder},
 };
 
 pub use websys_gles2 as gl;
+
+#[derive(Debug)]
+pub struct ErrorFromJs(String);
+impl std::fmt::Display for ErrorFromJs {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        write!(f, "{}", self.0)?;
+        Ok(())
+    }
+}
+impl std::error::Error for ErrorFromJs {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        None
+    }
+    fn description(&self) -> &str {
+        &self.0
+    }
+    fn cause(&self) -> Option<&dyn std::error::Error> {
+        None
+    }
+}
+trait AsErrorFromJs {
+    fn as_js_err(self) -> ErrorFromJs;
+}
+impl AsErrorFromJs for JsValue {
+    fn as_js_err(self) -> ErrorFromJs {
+        ErrorFromJs(JsString::from(self).as_string().unwrap())
+    }
+}
+trait MapJsError<T> {
+    fn map_js_error(self) -> Result<T, ErrorFromJs>;
+}
+impl<T> MapJsError<T> for Result<T, JsValue> {
+    fn map_js_error(self) -> Result<T, ErrorFromJs> {
+        self.map_err(JsValue::as_js_err)
+    }
+}
 
 fn window() -> web_sys::Window {
     web_sys::window().expect("no global `window` exists")
@@ -26,6 +63,13 @@ fn create_canvas() -> Result<HtmlCanvasElement, JsValue> {
     let document = document();
     let canvas: HtmlCanvasElement = document.create_element("canvas")?.dyn_into()?;
     Ok(canvas)
+}
+
+fn local_storage() -> Result<Storage, ErrorFromJs> {
+    Ok(window()
+        .local_storage()
+        .map_js_error()?
+        .expect("should have localstorage"))
 }
 
 fn create_event_loop_takeover(platform: &Platform) -> Closure<dyn FnMut()> {
@@ -120,11 +164,25 @@ impl PlatformApi for Platform {
             main_loop(&ev, tgt);
         });
     }
-    fn load_userdata(_id: &str) -> Result<crate::UserData, anyhow::Error> {
-        Ok(crate::UserData::default())
+    fn load_userdata(id: &str) -> Result<crate::UserData, anyhow::Error> {
+        let storage = local_storage()?;
+        if let Some(data) = storage.get_item(&format!("{}_user", id)).map_js_error()? {
+            info!("Found existing data for user id {}", id);
+            Ok(serde_json::from_str(&data)?)
+        } else if id == "default" {
+            info!("No persisted user data found for id {}. Using default.", id);
+            Ok(crate::UserData::default())
+        } else {
+            Err(anyhow!("Failed to find data for user id {}", id))
+        }
     }
-    fn persist_userdata(_data: &crate::UserData) -> Result<(), anyhow::Error> {
-        todo!();
+    fn persist_userdata(data: &crate::UserData) -> Result<(), anyhow::Error> {
+        let storage = local_storage()?;
+        let json = serde_json::to_string(data)?;
+        storage
+            .set_item(&format!("{}_user", data.user.id), &json)
+            .map_js_error()?;
+        Ok(())
     }
 
     fn create_renderer(&self) -> Self::Renderer {

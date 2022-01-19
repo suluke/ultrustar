@@ -11,7 +11,7 @@ pub trait Renderer: Sized {
     /// # Errors
     ///
     /// Whenever the instantiation of the renderer fails
-    fn new(settings: Self::InitSettings) -> Result<Self, Self::InitError>;
+    fn new(settings: &Self::InitSettings) -> Result<Self, Self::InitError>;
 
     /// Refresh the graphical representation
     fn render(&self);
