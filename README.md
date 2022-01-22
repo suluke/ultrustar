@@ -2,6 +2,9 @@
 
 ![CI](https://github.com/suluke/ultrustar/actions/workflows/ci.yml/badge.svg)
 
+## Documentation
+Up-to-date documentation generated with `rustdoc` can be found [here](https://suluke.github.io/ultrustar/ultrustar/index.html).
+
 ## Build Instructions
 
 ### Generic Preparations
