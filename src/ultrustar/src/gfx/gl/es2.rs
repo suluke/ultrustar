@@ -1,29 +1,26 @@
-use std::fmt::Display;
-
-use crate::platform::gl;
+use crate::platform::{gl, Platform, PlatformApi};
 use serde::{Deserialize, Serialize};
 
 #[derive(Default, Serialize, Deserialize)]
 pub struct InitSettings;
 impl crate::SettingsTrait for InitSettings {}
 
-#[derive(Debug)]
-pub struct InitError;
-impl Display for InitError {
-    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
-    }
+pub struct Renderer {
+    window: <Platform as PlatformApi>::GlWindow,
 }
-impl std::error::Error for InitError {}
-pub struct Renderer;
 
 impl crate::gfx::Renderer for Renderer {
     type InitSettings = InitSettings;
 
-    type InitError = InitError;
+    type InitError = anyhow::Error;
 
-    fn new(_settings: &Self::InitSettings) -> Result<Self, Self::InitError> {
-        Ok(Self)
+    fn new(_settings: &Self::InitSettings, platform: &Platform) -> Result<Self, Self::InitError> {
+        let window = platform.create_gl_window()?;
+        Ok(Self { window })
+    }
+
+    fn get_window(&self) -> &crate::Window {
+        self.window.window()
     }
 
     fn render(&self) {
@@ -32,5 +29,6 @@ impl crate::gfx::Renderer for Renderer {
             gl::ClearColor(0.0, 0.0, 0.0, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
         }
+        self.window.swap_buffers().unwrap();
     }
 }

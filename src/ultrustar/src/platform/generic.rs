@@ -1,13 +1,12 @@
-use crate::{Event, EventLoop, Signals, UserData};
+use crate::{gfx::Renderer, platform::PlatformApi, Event, EventLoop, Signals, UserData};
 use anyhow::anyhow;
 use directories::ProjectDirs;
-use glutin::{ContextWrapper, PossiblyCurrent};
 use log::info;
 use std::{fs::File, path::PathBuf};
 use winit::{
     event::WindowEvent,
     event_loop::{ControlFlow, EventLoopWindowTarget},
-    window::{Window, WindowBuilder},
+    window::WindowBuilder,
 };
 
 pub use gl;
@@ -15,7 +14,6 @@ pub use gl;
 pub struct Settings;
 
 pub struct Platform {
-    window: ContextWrapper<PossiblyCurrent, Window>,
     event_loop: EventLoop,
 }
 fn get_userdata_path(user_id: &str) -> Result<PathBuf, anyhow::Error> {
@@ -26,11 +24,22 @@ fn get_userdata_path(user_id: &str) -> Result<PathBuf, anyhow::Error> {
     dest.push(format!("{}_user.json", user_id));
     Ok(dest)
 }
-impl super::PlatformApi for Platform {
+impl PlatformApi for Platform {
     type Settings = Settings;
 
     type Renderer = crate::gfx::gl::RendererES2;
     type InitError = ();
+    type GlWindow = glutin::WindowedContext<glutin::PossiblyCurrent>;
+
+    fn create_gl_window(&self) -> Result<Self::GlWindow, anyhow::Error> {
+        let window = WindowBuilder::new().with_title("Ultrustar");
+        let gl_window = glutin::ContextBuilder::new().build_windowed(window, &self.event_loop)?;
+
+        #[allow(unsafe_code)]
+        let gl_window = unsafe { gl_window.make_current().map_err(|(_, err)| err)? };
+        gl::load_with(|symbol| gl_window.get_proc_address(symbol));
+        Ok(gl_window)
+    }
 
     fn load_userdata(id: &str) -> Result<crate::UserData, anyhow::Error> {
         match File::open(get_userdata_path(id)?) {
@@ -60,19 +69,8 @@ impl super::PlatformApi for Platform {
 
     fn init(_settings: Self::Settings) -> Result<Self, Self::InitError> {
         let event_loop = EventLoop::with_user_event();
-        let window = WindowBuilder::new().with_title("Ultrustar");
-        let gl_window = glutin::ContextBuilder::new()
-            .build_windowed(window, &event_loop)
-            .unwrap();
 
-        #[allow(unsafe_code)]
-        let gl_window = unsafe { gl_window.make_current().unwrap() };
-        gl::load_with(|symbol| gl_window.get_proc_address(symbol));
-
-        Ok(Self {
-            window: gl_window,
-            event_loop,
-        })
+        Ok(Self { event_loop })
     }
 
     fn run<F>(self, mut main_loop: F)
@@ -96,13 +94,13 @@ impl super::PlatformApi for Platform {
                 ev = Event::UserEvent(Signals::Exit);
             }
             main_loop(&ev, tgt);
-            if matches!(&ev, Event::RedrawRequested(_)) {
-                self.window.swap_buffers().unwrap();
-            }
         });
     }
 
-    fn create_renderer(&self) -> Self::Renderer {
-        Self::Renderer {}
+    fn create_renderer(
+        &self,
+        settings: &<Self::Renderer as Renderer>::InitSettings,
+    ) -> Result<Self::Renderer, anyhow::Error> {
+        Self::Renderer::new(settings, self)
     }
 }

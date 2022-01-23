@@ -9,6 +9,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9222d58bccd9e6e3b82098a2ec142ad34e5d433de986d46cec03ad3a2b5fd529"
 
 [[package]]
+name = "ab_glyph"
+version = "0.2.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "61caed9aec6daeee1ea38ccf5fb225e4f96c1eeead1b4a5c267324a63cf02326"
+dependencies = [
+ "ab_glyph_rasterizer",
+ "owned_ttf_parser",
+]
+
+[[package]]
+name = "ab_glyph_rasterizer"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a13739d7177fbd22bb0ed28badfff9f372f8bef46c863db4e1c6248f6b223b6e"
+
+[[package]]
 name = "actix-codec"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -288,6 +304,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "ahash"
+version = "0.7.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fcb51a0695d8f838b1ee009b3fbf66bda078cd64590202a864a8f3e8c4315c47"
+dependencies = [
+ "getrandom 0.2.3",
+ "once_cell",
+ "version_check 0.9.3",
+]
+
+[[package]]
 name = "aho-corasick"
 version = "0.7.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -387,6 +414,12 @@ dependencies = [
  "quote 1.0.9",
  "syn 1.0.78",
 ]
+
+[[package]]
+name = "atomic_refcell"
+version = "0.1.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "73b5e5f48b927f04e952dedc932f31995a65a0bf65ec971c74436e51bf6e970d"
 
 [[package]]
 name = "atty"
@@ -673,6 +706,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "clipboard-win"
+version = "3.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9fdf5e01086b6be750428ba4a40619f847eb2e95756eee84b18e06e5f0b50342"
+dependencies = [
+ "lazy-bytes-cast",
+ "winapi 0.3.9",
+]
+
+[[package]]
 name = "cloudabi"
 version = "0.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -723,6 +766,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "console_error_panic_hook"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a06aeb73f470f66dcdbf7223caeebb85984942f22f1adb2a088cf9668146bbbc"
+dependencies = [
+ "cfg-if 1.0.0",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "console_log"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -760,6 +813,20 @@ name = "copyless"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2df960f5d869b2dd8532793fde43eb5427cceb126c929747a26823ab0eeb536"
+
+[[package]]
+name = "copypasta"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4423d79fed83ebd9ab81ec21fa97144300a961782158287dc9bf7eddac37ff0b"
+dependencies = [
+ "clipboard-win",
+ "objc",
+ "objc-foundation",
+ "objc_id",
+ "smithay-clipboard",
+ "x11-clipboard",
+]
 
 [[package]]
 name = "core-foundation"
@@ -1094,10 +1161,37 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
 
 [[package]]
+name = "egui"
+version = "0.16.1"
+source = "git+https://github.com/emilk/egui.git?rev=01015ac94cfb6f259f649c35b1ed16cfe2e8543b#01015ac94cfb6f259f649c35b1ed16cfe2e8543b"
+dependencies = [
+ "ahash",
+ "epaint",
+ "nohash-hasher",
+]
+
+[[package]]
+name = "egui-winit"
+version = "0.16.0"
+source = "git+https://github.com/emilk/egui.git?rev=01015ac94cfb6f259f649c35b1ed16cfe2e8543b#01015ac94cfb6f259f649c35b1ed16cfe2e8543b"
+dependencies = [
+ "copypasta",
+ "egui",
+ "instant",
+ "webbrowser",
+ "winit",
+]
+
+[[package]]
 name = "either"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
+
+[[package]]
+name = "emath"
+version = "0.16.0"
+source = "git+https://github.com/emilk/egui.git?rev=01015ac94cfb6f259f649c35b1ed16cfe2e8543b#01015ac94cfb6f259f649c35b1ed16cfe2e8543b"
 
 [[package]]
 name = "ena"
@@ -1204,6 +1298,18 @@ dependencies = [
  "log",
  "regex",
  "termcolor",
+]
+
+[[package]]
+name = "epaint"
+version = "0.16.0"
+source = "git+https://github.com/emilk/egui.git?rev=01015ac94cfb6f259f649c35b1ed16cfe2e8543b#01015ac94cfb6f259f649c35b1ed16cfe2e8543b"
+dependencies = [
+ "ab_glyph",
+ "ahash",
+ "atomic_refcell",
+ "emath",
+ "nohash-hasher",
 ]
 
 [[package]]
@@ -1859,6 +1965,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a91d884b6667cd606bb5a69aa0c99ba811a115fc68915e7056ec08a46e93199a"
 
 [[package]]
+name = "lazy-bytes-cast"
+version = "5.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "10257499f089cd156ad82d0a9cd57d9501fa2c989068992a97eb3c27836f206b"
+
+[[package]]
 name = "lazy_static"
 version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2273,6 +2385,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "nohash-hasher"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2bf50223579dc7cdcfb3bfcacf7069ff68243f8c363f62ffa99cf000a6b9c451"
+
+[[package]]
 name = "nom"
 version = "4.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2373,6 +2491,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "objc-foundation"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1add1b659e36c9607c7aab864a76c7a4c2760cd0cd2e120f3fb8b952c7e22bf9"
+dependencies = [
+ "block",
+ "objc",
+ "objc_id",
+]
+
+[[package]]
+name = "objc_id"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c92d4ddb4bd7b50d730c215ff871754d0da6b2178849f8a2a2ab69712d0c073b"
+dependencies = [
+ "objc",
+]
+
+[[package]]
 name = "oboe"
 version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2426,6 +2564,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "88cfece6e95d2e717e0872a7f53a8684712ad13822a7979bc760b9c77ec0013b"
 dependencies = [
  "shared_library",
+]
+
+[[package]]
+name = "owned_ttf_parser"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ef05f2882a8b3e7acc10c153ade2631f7bfc8ce00d2bf3fb8f4e9d2ae6ea5c3"
+dependencies = [
+ "ttf-parser",
 ]
 
 [[package]]
@@ -2643,6 +2790,15 @@ name = "quick-error"
 version = "1.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a1d01941d82fa2ab50be1e79e6714289dd7cde78eba4c074bc5a4374f650dfe0"
+
+[[package]]
+name = "quick-xml"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8533f14c8382aaad0d592c812ac3b826162128b65662331e1127b45c3d18536b"
+dependencies = [
+ "memchr",
+]
 
 [[package]]
 name = "quote"
@@ -3175,6 +3331,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "smithay-clipboard"
+version = "0.6.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "610b551bd25378bfd2b8e7a0fcbd83d427e8f2f6a40c47ae0f70688e9949dd55"
+dependencies = [
+ "smithay-client-toolkit",
+ "wayland-client",
+]
+
+[[package]]
 name = "socket2"
 version = "0.3.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3608,6 +3774,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "ttf-parser"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ccbe8381883510b6a2d8f1e32905bddd178c11caef8083086d0c0c9ab0ac281"
+
+[[package]]
 name = "typenum"
 version = "1.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3624,9 +3796,12 @@ name = "ultrustar"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "console_error_panic_hook",
  "console_log",
  "cpal",
  "directories",
+ "egui",
+ "egui-winit",
  "env_logger",
  "gilrs",
  "gl",
@@ -4095,6 +4270,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "webbrowser"
+version = "0.5.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ecad156490d6b620308ed411cfee90d280b3cbd13e189ea0d3fada8acc89158a"
+dependencies = [
+ "web-sys",
+ "widestring",
+ "winapi 0.3.9",
+]
+
+[[package]]
 name = "webgl_generator"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4304,6 +4490,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "x11-clipboard"
+version = "0.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "473068b7b80ac86a18328824f1054e5e007898c47b5bbc281bd7abe32bc3653c"
+dependencies = [
+ "xcb",
+]
+
+[[package]]
 name = "x11-dl"
 version = "2.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4312,6 +4507,17 @@ dependencies = [
  "lazy_static 1.4.0",
  "libc",
  "pkg-config",
+]
+
+[[package]]
+name = "xcb"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "771e2b996df720cd1c6dd9ff90f62d91698fd3610cc078388d0564bdd6622a9c"
+dependencies = [
+ "libc",
+ "log",
+ "quick-xml",
 ]
 
 [[package]]

@@ -13,6 +13,16 @@ pub trait PlatformApi: Sized {
     /// Representation of errors that may occur during initialization
     type InitError;
 
+    /// Implementation of a window offering `OpenGl` functionality on the current platform.
+    type GlWindow: Sized;
+
+    /// Create a new window which offers `OpenGl` graphics capabilities
+    ///
+    /// # Errors
+    ///
+    /// Return an error if the creation of the gl-capable window failed.
+    fn create_gl_window(&self) -> Result<Self::GlWindow, anyhow::Error>;
+
     /// Load user data from persistent storage
     ///
     /// # Errors
@@ -40,7 +50,15 @@ pub trait PlatformApi: Sized {
         F: 'static + FnMut(&Event<'_>, &EventLoopWindowTarget<Signals>);
 
     /// Create a renderer instance
-    fn create_renderer(&self) -> Self::Renderer;
+    ///
+    /// # Errors
+    ///
+    /// Forwards any errors of the underlying graphics subsystem which prevent
+    /// successful instantiation.
+    fn create_renderer(
+        &self,
+        settings: &<Self::Renderer as crate::gfx::Renderer>::InitSettings,
+    ) -> Result<Self::Renderer, anyhow::Error>;
 }
 
 /// Other platform implementation requirements:

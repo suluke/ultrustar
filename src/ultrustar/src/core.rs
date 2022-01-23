@@ -4,6 +4,9 @@ pub mod platform;
 #[path = "./gfx/mod.rs"]
 pub mod gfx;
 
+#[path = "./ui/mod.rs"]
+pub mod ui;
+
 use platform::{Platform, PlatformApi};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
@@ -30,6 +33,8 @@ impl Default for User {
 pub enum Signals {
     Exit,
 }
+
+pub type Window = winit::window::Window;
 pub type EventLoop = winit::event_loop::EventLoop<Signals>;
 pub type Event<'a> = winit::event::Event<'a, Signals>;
 
@@ -47,14 +52,14 @@ pub fn run(platform: Platform) {
     // wrap code in IIFE to write any errors to log before panicing
     (|| -> anyhow::Result<()> {
         let userdata = Platform::load_userdata("default")?;
-        let renderer = Renderer::new(&userdata.gfx)?;
+        let renderer = platform.create_renderer(&userdata.gfx)?;
+        let mut main_ui = ui::MainUI::new(renderer.get_window());
         platform.run(move |event, _| match event {
-            Event::RedrawRequested(_) => {
-                renderer.render();
-            }
+            Event::RedrawRequested(_) => main_ui.render(&renderer),
             Event::UserEvent(Signals::Exit) => {
                 Platform::persist_userdata(&userdata).expect("Persisting settings failed");
             }
+            Event::WindowEvent { event, .. } => main_ui.push_event(event),
             _ => (),
         });
         Ok(())

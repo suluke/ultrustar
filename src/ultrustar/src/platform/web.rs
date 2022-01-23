@@ -1,7 +1,7 @@
 use super::PlatformApi;
-use crate::{Event, EventLoop, Signals};
+use crate::{gfx::Renderer, Event, EventLoop, Signals};
 use anyhow::anyhow;
-use js_sys::{Boolean, JsString, Map};
+use js_sys::{Boolean, JsString, Map, Object as JsObject};
 use log::info;
 use std::{cell::RefCell, rc::Rc};
 use wasm_bindgen::{prelude::*, JsCast};
@@ -40,12 +40,22 @@ impl AsErrorFromJs for JsValue {
         ErrorFromJs(JsString::from(self).as_string().unwrap())
     }
 }
+impl AsErrorFromJs for JsObject {
+    fn as_js_err(self) -> ErrorFromJs {
+        ErrorFromJs(self.to_string().as_string().unwrap())
+    }
+}
 trait MapJsError<T> {
     fn map_js_error(self) -> Result<T, ErrorFromJs>;
 }
 impl<T> MapJsError<T> for Result<T, JsValue> {
     fn map_js_error(self) -> Result<T, ErrorFromJs> {
         self.map_err(JsValue::as_js_err)
+    }
+}
+impl<T> MapJsError<T> for Result<T, JsObject> {
+    fn map_js_error(self) -> Result<T, ErrorFromJs> {
+        self.map_err(JsObject::as_js_err)
     }
 }
 
@@ -107,10 +117,29 @@ impl EventLoopHandle {
         }
     }
 }
+impl std::ops::Deref for EventLoopHandle {
+    type Target = EventLoopWindowTarget<Signals>;
+    fn deref(&self) -> &Self::Target {
+        match self {
+            Self::Owned(el) => el,
+            Self::Proxy(_) =>
+                todo!("Don't know how to get EventLoopWindowTarget from Proxy but maybe never becomes needed anyhow"),
+        }
+    }
+}
+
+pub struct GlWindow(Window);
+impl GlWindow {
+    pub fn swap_buffers(&self) -> Result<(), anyhow::Error> {
+        Ok(())
+    }
+    pub fn window(&self) -> &Window {
+        &self.0
+    }
+}
 
 pub struct PlatformImpl {
     event_loop: EventLoopHandle,
-    _window: Window,
     canvas: HtmlCanvasElement,
 }
 pub type Platform = Rc<RefCell<PlatformImpl>>;
@@ -123,29 +152,14 @@ impl PlatformApi for Platform {
     type Settings = Settings;
     type Renderer = crate::core::gfx::gl::RendererES2;
     type InitError = JsValue;
+    type GlWindow = GlWindow;
 
     fn init(settings: Self::Settings) -> Result<Self, Self::InitError> {
         let canvas = create_canvas()?;
         settings.mount_point.append_child(canvas.unchecked_ref())?;
-        let ctx_opts = Map::new();
-        ctx_opts.set(&JsString::from("depth"), &Boolean::from(false));
-        let ctx: WebGlRenderingContext = canvas
-            .get_context_with_context_options("webgl", &ctx_opts)?
-            .unwrap()
-            .dyn_into()?;
-        gl::set_context(ctx);
-
         let event_loop = EventLoop::with_user_event();
-        use winit::platform::web::WindowBuilderExtWebSys;
-        let window = WindowBuilder::new()
-            .with_canvas(Some(canvas.clone()))
-            .with_title("A fantastic window!")
-            .build(&event_loop)
-            .unwrap();
-
         let instance = Rc::new(RefCell::new(PlatformImpl {
             event_loop: EventLoopHandle::Owned(event_loop),
-            _window: window,
             canvas,
         }));
 
@@ -185,8 +199,32 @@ impl PlatformApi for Platform {
         Ok(())
     }
 
-    fn create_renderer(&self) -> Self::Renderer {
-        todo!();
+    fn create_gl_window(&self) -> Result<Self::GlWindow, anyhow::Error> {
+        let leme = self.borrow();
+        let ctx_opts = Map::new();
+        ctx_opts.set(&JsString::from("depth"), &Boolean::from(false));
+        let ctx: WebGlRenderingContext = leme
+            .canvas
+            .get_context_with_context_options("webgl", &ctx_opts)
+            .map_js_error()?
+            .unwrap()
+            .dyn_into()
+            .map_js_error()?;
+        gl::set_context(ctx);
+
+        use winit::platform::web::WindowBuilderExtWebSys;
+        let window = WindowBuilder::new()
+            .with_canvas(Some(leme.canvas.clone()))
+            .with_title("A fantastic window!")
+            .build(&leme.event_loop)?;
+        Ok(GlWindow(window))
+    }
+
+    fn create_renderer(
+        &self,
+        settings: &<Self::Renderer as Renderer>::InitSettings,
+    ) -> Result<Self::Renderer, anyhow::Error> {
+        Self::Renderer::new(settings, self)
     }
 }
 
@@ -215,6 +253,8 @@ pub fn render_into(parent: Node) -> Result<Api, JsValue> {
     console_log::init_with_level(Level::Debug).expect("Failed to initialize logging framework");
     #[cfg(not(debug_assertions))]
     console_log::init_with_level(Level::Warn).expect("Failed to initialize logging framework");
+
+    std::panic::set_hook(Box::new(console_error_panic_hook::hook));
 
     let settings = Settings {
         mount_point: parent,
