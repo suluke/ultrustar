@@ -40,8 +40,12 @@ pub type Event<'a> = winit::event::Event<'a, Signals>;
 
 #[derive(Default, Serialize, Deserialize)]
 pub struct UserData {
+    #[serde(default)]
     user: User,
+    #[serde(default)]
     gfx: <Renderer as RendererApi>::InitSettings,
+    #[serde(default)]
+    ui: ui::MainUISettings,
 }
 impl SettingsTrait for UserData {}
 
@@ -53,7 +57,7 @@ pub fn run(platform: Platform) {
     (|| -> anyhow::Result<()> {
         let userdata = Platform::load_userdata("default")?;
         let renderer = platform.create_renderer(&userdata.gfx)?;
-        let mut main_ui = ui::MainUI::new(renderer.get_window());
+        let mut main_ui = ui::MainUI::new(&userdata.ui, renderer.get_window());
         platform.run(move |event, _| match event {
             Event::RedrawRequested(_) => main_ui.render(&renderer),
             Event::UserEvent(Signals::Exit) => {

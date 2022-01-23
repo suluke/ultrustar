@@ -28,6 +28,7 @@ winit = "0.26"
 # FIXME next egui-winit version should be compatible with wasm
 egui = { git = "https://github.com/emilk/egui.git", rev = "01015ac94cfb6f259f649c35b1ed16cfe2e8543b" }
 egui-winit = { git = "https://github.com/emilk/egui.git", rev = "01015ac94cfb6f259f649c35b1ed16cfe2e8543b" }
+dark-light = { git = "https://github.com/suluke/rust-dark-light.git" }
 # Settings
 serde = "1.0"
 serde_json = "1.0"

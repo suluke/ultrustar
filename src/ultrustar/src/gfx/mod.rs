@@ -1,3 +1,5 @@
+use egui::epaint::ClippedShape;
+
 use crate::platform::Platform;
 
 /// Documentation trait
@@ -18,7 +20,7 @@ pub trait Renderer: Sized {
     fn get_window(&self) -> &crate::Window;
 
     /// Refresh the graphical representation
-    fn render(&self);
+    fn render(&self, shapes: Vec<ClippedShape>);
 }
 
 pub mod gl;
