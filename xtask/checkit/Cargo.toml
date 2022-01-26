@@ -8,5 +8,4 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0"
 argh = "0.1"
-lazy_static = "1.4.0"
 xshell = "0.1"

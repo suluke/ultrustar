@@ -11,7 +11,6 @@
 
 use anyhow::{anyhow, Result};
 use argh::FromArgs;
-use lazy_static::lazy_static;
 use xshell::cmd;
 
 #[derive(FromArgs)]
@@ -20,43 +19,55 @@ struct Cli {
     /// run the specified check
     #[argh(option, short = 'c')]
     check: Option<String>,
+
+    /// check verbosity
+    #[argh(switch, short = 'v')]
+    verbose: bool,
 }
 
 trait Check: Sync {
     fn key(&self) -> &'static str;
-    fn check(&self) -> Result<()>;
+    fn check(&self, opts: &Cli) -> Result<()>;
 }
 
 macro_rules! new_check {
-    ($name:ident, $id:literal, $impl:block) => {
+    ($name:ident, $id:literal, $opts:ident, $impl:block) => {
         struct $name;
         impl Check for $name {
             fn key(&self) -> &'static str {
                 $id
             }
-            fn check(&self) -> Result<()> {
+            fn check(&self, $opts: &Cli) -> Result<()> {
                 $impl
             }
         }
     };
 }
 
-new_check!(CheckBuild, "build", {
-    cmd!("cargo build --verbose")
-        .run()
-        .map_err(anyhow::Error::from)
+new_check!(CheckBuild, "build", opts, {
+    if opts.verbose {
+        cmd!("cargo build --verbose")
+    } else {
+        cmd!("cargo build")
+    }
+    .run()
+    .map_err(anyhow::Error::from)
 });
-new_check!(CheckTests, "test", {
-    cmd!("cargo test --verbose")
-        .run()
-        .map_err(anyhow::Error::from)
+new_check!(CheckTests, "test", opts, {
+    if opts.verbose {
+        cmd!("cargo test --verbose")
+    } else {
+        cmd!("cargo test")
+    }
+    .run()
+    .map_err(anyhow::Error::from)
 });
-new_check!(CheckWasm, "test", {
+new_check!(CheckWasm, "test", _opts, {
     cmd!("cargo wasm --release")
         .run()
         .map_err(anyhow::Error::from)
 });
-new_check!(CheckGitClean, "clean-git", {
+new_check!(CheckGitClean, "clean-git", _opts, {
     let stdout = cmd!("git status -uno --porcelain=v1").read()?;
     if stdout.is_empty() {
         Ok(())
@@ -64,14 +75,14 @@ new_check!(CheckGitClean, "clean-git", {
         Err(anyhow!(format!("Git repo not clean:\n{}", stdout)))
     }
 });
-new_check!(CheckFmt, "fmt", {
+new_check!(CheckFmt, "fmt", opts, {
     cmd!("cargo fmt --all").run().map_err(anyhow::Error::from)?;
-    CheckGitClean.check()
+    CheckGitClean.check(opts)
 });
-new_check!(CheckClippy, "clippy", {
+new_check!(CheckClippy, "clippy", _opts, {
     cmd!("cargo clippy").run().map_err(anyhow::Error::from)
 });
-new_check!(CheckDocs, "doc", {
+new_check!(CheckDocs, "doc", _opts, {
     cmd!("cargo doc --workspace --no-deps")
         .run()
         .map_err(anyhow::Error::from)
@@ -100,25 +111,22 @@ impl CheckRegistry {
     }
 }
 
-lazy_static! {
-    static ref ALL_CHECKS: CheckRegistry = CheckRegistry::new();
-}
-
 fn run_checks() -> Result<()> {
     let options: Cli = argh::from_env();
+    let checks = CheckRegistry::new();
     if let Some(check) = &options.check {
         // run specified check (if found)
-        if let Some(check) = ALL_CHECKS.iter().find(|&c| c.key() == check) {
+        if let Some(check) = checks.iter().find(|&c| c.key() == check) {
             println!("Running check: {}", check.key());
-            check.check()?;
+            check.check(&options)?;
         } else {
             return Err(anyhow!("Unknown check: {}", check));
         }
     } else {
         // run all
-        for check in ALL_CHECKS.iter() {
+        for check in checks.iter() {
             println!("Running check: {}", check.key());
-            check.check()?;
+            check.check(&options)?;
         }
     }
     Ok(())

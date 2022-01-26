@@ -783,7 +783,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "argh",
- "lazy_static 1.4.0",
  "xshell",
 ]
 
