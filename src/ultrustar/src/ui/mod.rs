@@ -59,7 +59,8 @@ impl MainUI {
         let window = renderer.get_window();
         let raw_input: egui::RawInput = self.events.take_egui_input(window);
         let (output, shapes) = self.ctx.run(raw_input, Self::build);
+        let meshes = self.ctx.tessellate(shapes);
         self.events.handle_output(window, &self.ctx, output);
-        renderer.render(shapes);
+        renderer.render(meshes);
     }
 }

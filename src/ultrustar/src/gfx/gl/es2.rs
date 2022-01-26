@@ -1,5 +1,5 @@
 use crate::platform::{gl, Platform, PlatformApi};
-use egui::epaint::ClippedShape;
+use egui::epaint::ClippedMesh;
 use serde::{Deserialize, Serialize};
 
 #[derive(Default, Serialize, Deserialize)]
@@ -24,7 +24,7 @@ impl crate::gfx::Renderer for Renderer {
         self.window.window()
     }
 
-    fn render(&self, _shapes: Vec<ClippedShape>) {
+    fn render(&self, _meshes: Vec<ClippedMesh>) {
         #[allow(unsafe_code)]
         unsafe {
             gl::ClearColor(0.0, 0.0, 0.0, 1.0);
