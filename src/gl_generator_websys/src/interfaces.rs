@@ -7,6 +7,7 @@ pub fn write<W>(registry: &Registry, dest: &mut W) -> std::io::Result<()>
 where
     W: std::io::Write,
 {
+    writeln!(dest, "use static_assertions::assert_eq_size;")?;
     for (name, interface) in registry.iter_types(NamedType::as_interface) {
         write_interface(name, interface, registry, dest)?;
     }
@@ -41,12 +42,13 @@ fn write_class<W>(name: &str, dest: &mut W) -> std::io::Result<()>
 where
     W: std::io::Write,
 {
+    let websys_name = name.replace("WebGL", "WebGl");
     writeln!(
         dest,
-        "pub use web_sys::{} as {};",
-        name.replace("WebGL", "WebGl"),
-        name
+        "assert_eq_size!(types::GLuint, web_sys::{});",
+        websys_name
     )?;
+    writeln!(dest, "pub type {} = types::GLuint;", name)?;
     Ok(())
 }
 
@@ -126,15 +128,6 @@ fn write_rendering_context<W>(
 where
     W: std::io::Write,
 {
-    const FALLIBLE_RESULTS: [&str; 1] = ["ReadPixels"];
-    const OPS_WRONG_TYPES: [&str; 4] = [
-        // Not in regular GLES
-        "GetExtension",
-        "GetParameter",
-        // Need output parameter and multiple type overloads
-        "GetFramebufferAttachmentParameter",
-        "GetVertexAttrib",
-    ];
     for (name, members) in interface.collect_members(registry, &VisitOptions::default()) {
         for &member in &members {
             if let Member::Operation(op) = member {
@@ -145,33 +138,7 @@ where
                 }
                 .map(heck::ToUpperCamelCase::to_upper_camel_case);
                 if let Some(name) = &name {
-                    let websys_name = get_websys_function_name(name, op, registry);
-                    let disabled = OPS_WRONG_TYPES.contains(&name.as_str());
-                    if disabled {
-                        writeln!(dest, "#[allow(unused, non_snake_case)]")?;
-                    } else {
-                        writeln!(dest, "#[allow(non_snake_case)]")?;
-                    }
-                    write!(dest, "pub unsafe fn {name}", name = name)?;
-                    write_args(&op.args, registry, dest)?;
-                    write_return_signature(op.return_type.as_ref(), registry, dest)?;
-                    writeln!(dest, " {{")?;
-                    if disabled {
-                        #[cfg(debug_assertions)]
-                        writeln!(dest, "    // {:?}", op)?;
-                        writeln!(dest, "    todo!()")?;
-                    } else {
-                        write!(dest, "    withctx!(CONTEXT, ctx, {{ctx.{}", websys_name)?;
-                        write_params(&op.args, dest)?;
-                        writeln!(dest, "}})")?;
-                        if FALLIBLE_RESULTS.contains(&name.as_str()) {
-                            writeln!(dest, "    .handle_js_error()")?;
-                        }
-                        if let Some(retty) = &op.return_type {
-                            write_result_conversion(retty, registry, dest)?;
-                        }
-                    }
-                    writeln!(dest, "}}")?;
+                    write_member_op(name, op, registry, dest)?;
                 }
             } else if let Member::Const(constant) = member {
                 writeln!(
@@ -188,6 +155,62 @@ where
     Ok(())
 }
 
+fn write_member_op<W>(
+    name: &str,
+    op: &Operation,
+    registry: &Registry,
+    dest: &mut W,
+) -> std::io::Result<()>
+where
+    W: std::io::Write,
+{
+    const FALLIBLE_RESULTS: [&str; 1] = ["ReadPixels"];
+    const OPS_WRONG_TYPES: [&str; 9] = [
+        // Not in regular GLES
+        "GetExtension",
+        "GetParameter",
+        // Return types should be out params
+        "GetAttachedShaders",
+        "GetSupportedExtensions",
+        "GetProgramInfoLog",
+        "GetShaderInfoLog",
+        "GetShaderSource",
+        // Need output parameter and multiple type overloads
+        "GetFramebufferAttachmentParameter",
+        "GetVertexAttrib",
+    ];
+
+    let websys_name = get_websys_function_name(name, op, registry);
+    let disabled = OPS_WRONG_TYPES.contains(&name);
+    if disabled {
+        writeln!(dest, "#[allow(unused, non_snake_case)]")?;
+    } else {
+        writeln!(dest, "#[allow(non_snake_case)]")?;
+    }
+    write!(dest, "pub unsafe fn {name}", name = name)?;
+    write_args(&op.args, registry, dest)?;
+    write_return_signature(op.return_type.as_ref(), registry, dest)?;
+    writeln!(dest, " {{")?;
+    if disabled {
+        #[cfg(debug_assertions)]
+        writeln!(dest, "    // {:?}", op)?;
+        writeln!(dest, "    todo!()")?;
+    } else {
+        write_param_casts(&op.args, registry, dest)?;
+        write!(dest, "    withctx!(CONTEXT, ctx, {{ctx.{}", websys_name)?;
+        write_params(&op.args, dest)?;
+        writeln!(dest, "}})")?;
+        if FALLIBLE_RESULTS.contains(&name) {
+            writeln!(dest, "    .handle_js_error()")?;
+        }
+        if let Some(retty) = &op.return_type {
+            write_result_conversion(retty, registry, dest)?;
+        }
+    }
+    writeln!(dest, "}}")?;
+    Ok(())
+}
+
 fn write_args<W>(args: &[Argument], registry: &Registry, dest: &mut W) -> std::io::Result<()>
 where
     W: std::io::Write,
@@ -201,6 +224,40 @@ where
         }
     }
     write!(dest, ")")?;
+    Ok(())
+}
+fn write_param_casts<W>(args: &[Argument], registry: &Registry, dest: &mut W) -> std::io::Result<()>
+where
+    W: std::io::Write,
+{
+    for arg in args.iter() {
+        if let TypeKind::String = &arg.type_.kind {
+            let argname = escape_ident(&arg.name);
+            writeln!(
+                dest,
+                "    let {argname} = std::ffi::CStr::from_ptr({argname}).to_str().unwrap();",
+                argname = &argname
+            )?;
+        } else if let TypeKind::Named(name) = &arg.type_.kind {
+            let resolved = registry.resolve_type(name);
+            if let NamedType::Interface(_) = resolved {
+                let argname = escape_ident(&arg.name);
+                writeln!(
+                    dest,
+                    "    let {argname} = &std::mem::transmute::<_, web_sys::{tyname}>({argname});",
+                    argname = &argname,
+                    tyname = name.replace("WebGL", "WebGl")
+                )?;
+                if arg.type_.optional {
+                    writeln!(
+                        dest,
+                        "    let {argname} = Some({argname});",
+                        argname = argname
+                    )?;
+                }
+            }
+        }
+    }
     Ok(())
 }
 fn write_params<W>(args: &[Argument], dest: &mut W) -> std::io::Result<()>
@@ -220,6 +277,13 @@ where
 
 fn is_keyword(s: &str) -> bool {
     ["ref", "type"].contains(&s)
+}
+fn escape_ident(ident: &str) -> String {
+    if is_keyword(ident) {
+        format!("{}_", ident)
+    } else {
+        ident.to_owned()
+    }
 }
 fn write_ident<W>(ident: &str, dest: &mut W) -> std::io::Result<()>
 where
@@ -275,6 +339,18 @@ where
                 "    .iter().map(|val| val.{}).collect::<Vec<_>>()",
                 convert
             )?;
+        }
+    }
+    if let TypeKind::Named(name) = &retty.kind {
+        let resolved = registry.resolve_type(name);
+        if retty.optional {
+            if let NamedType::Interface(_) = resolved {
+                writeln!(
+                    dest,
+                    "    .map_or(GLuint::MAX, |val| std::mem::transmute::<_, {}>(val))",
+                    name
+                )?;
+            }
         }
     }
     Ok(())
