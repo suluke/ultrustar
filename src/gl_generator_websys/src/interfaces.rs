@@ -1,4 +1,4 @@
-use super::types;
+use super::{types, compat::FunctionAlternative};
 use webgl_generator::{
     Argument, Interface, Member, NamedType, Operation, Registry, Type, TypeKind, VisitOptions,
 };
@@ -12,6 +12,43 @@ where
         write_interface(name, interface, registry, dest)?;
     }
     Ok(())
+}
+
+struct IndexType {
+    ty: &'static str,
+    none_val: &'static str,
+}
+impl IndexType {
+    pub fn gl_int() -> Self {
+        Self {
+            ty: "GLint",
+            none_val: "-1",
+        }
+    }
+    pub fn gl_uint() -> Self {
+        Self {
+            ty: "GLuint",
+            none_val: "GLuint::MAX",
+        }
+    }
+}
+
+#[derive(Default)]
+struct ClassInfo {
+    indexed_as: Option<IndexType>,
+}
+impl ClassInfo {
+    pub fn get(name: &str) -> Self {
+        if name == "WebGLUniformLocation" {
+            Self {
+                indexed_as: Some(IndexType::gl_int()),
+            }
+        } else {
+            Self {
+                indexed_as: Some(IndexType::gl_uint()),
+            }
+        }
+    }
 }
 
 fn write_interface<W>(
@@ -42,16 +79,22 @@ fn write_class<W>(name: &str, dest: &mut W) -> std::io::Result<()>
 where
     W: std::io::Write,
 {
-    let websys_name = name.replace("WebGL", "WebGl");
-    writeln!(
-        dest,
-        "assert_eq_size!(types::GLuint, web_sys::{});",
-        websys_name
-    )?;
-    writeln!(dest, "pub type {} = types::GLuint;", name)?;
+    if let Some(idxty) = ClassInfo::get(name).indexed_as {
+        let websys_name = name.replace("WebGL", "WebGl");
+        writeln!(
+            dest,
+            "assert_eq_size!({}, web_sys::{});",
+            idxty.ty, websys_name
+        )?;
+        writeln!(dest, "pub type {} = types::{};", name, idxty.ty)?;
+    }
     Ok(())
 }
 
+/// There is at least one function that is only overloaded because it takes a pointer as argument
+/// and web_sys wants to give the option to use either u32 or f64 to represent the pointer (because
+/// js numbers and stuff). Since we typedef GL*ptr to f64 only one of those overloads is releveant
+/// for us and we only create one binding for it.
 fn unoverload(name: &str, op: &Operation) -> Option<&'static str> {
     let mut fixups = std::collections::BTreeMap::new();
     fixups.insert("bufferData", |op: &Operation| {
@@ -107,6 +150,7 @@ fn get_websys_function_name(name: &str, op: &Operation, registry: &Registry) -> 
         }
     });
     let mut result = name.to_snake_case().replace("2_d", "_2d");
+    // a generator for the conjunctions, used for generating e.g. "with_x_and_y_and_z"
     let mut conj_gen = Some("_with").iter().chain(Some("_and").iter().cycle());
     if has_pointer_arg {
         result += conj_gen.next().unwrap();
@@ -164,6 +208,10 @@ fn write_member_op<W>(
 where
     W: std::io::Write,
 {
+    if FunctionAlternative::get(name).is_some() {
+        // will be written by compat
+        return Ok(());
+    }
     const FALLIBLE_RESULTS: [&str; 1] = ["ReadPixels"];
     const OPS_WRONG_TYPES: [&str; 9] = [
         // Not in regular GLES
@@ -345,11 +393,13 @@ where
         let resolved = registry.resolve_type(name);
         if retty.optional {
             if let NamedType::Interface(_) = resolved {
-                writeln!(
-                    dest,
-                    "    .map_or(GLuint::MAX, |val| std::mem::transmute::<_, {}>(val))",
-                    name
-                )?;
+                if let Some(idxty) = ClassInfo::get(name).indexed_as {
+                    writeln!(
+                        dest,
+                        "    .map_or({}, |val| std::mem::transmute::<_, {}>(val))",
+                        idxty.none_val, name
+                    )?;
+                }
             }
         }
     }
