@@ -74,3 +74,27 @@ pub fn stringify_arg(ty: &Type, registry: &Registry) -> String {
         format!("{}{}", pass_spec, mapped.name)
     }
 }
+
+pub fn write_defs<W>(registry: &Registry, dest: &mut W) -> std::io::Result<()>
+where
+    W: std::io::Write,
+{
+    let mut fixups = std::collections::BTreeMap::new();
+    fixups.insert("GLintptr", "f64");
+    fixups.insert("GLsizeiptr", "f64");
+
+    writeln!(dest, "pub mod types {{")?;
+    writeln!(dest, "    use wasm_bindgen::JsValue;")?;
+    for (name, ty) in registry.iter_types(NamedType::as_typedef) {
+        let ty = if let Some(&fixup) = fixups.get(name.as_str()) {
+            fixup.to_owned()
+        } else {
+            stringify_return(ty, registry)
+        };
+        writeln!(dest, "    pub type {name} = {ty};", name = name, ty = ty)?;
+    }
+    super::compat::write_typdefs(registry, dest)?;
+    writeln!(dest, "}}")?;
+    writeln!(dest, "use types::*;")?;
+    Ok(())
+}

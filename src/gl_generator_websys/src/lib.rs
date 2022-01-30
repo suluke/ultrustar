@@ -13,6 +13,7 @@
 /// as a dependency. This avoids version mismatches.
 pub use webgl_generator::*;
 
+mod compat;
 mod dicts;
 mod interfaces;
 mod types;
@@ -85,29 +86,6 @@ impl<T> HandleJsError for Result<T, JsValue> {{
     Ok(())
 }
 
-fn write_typedefs<W>(registry: &Registry, dest: &mut W) -> std::io::Result<()>
-where
-    W: std::io::Write,
-{
-    let mut fixups = std::collections::BTreeMap::new();
-    fixups.insert("GLintptr", "f64");
-    fixups.insert("GLsizeiptr", "f64");
-
-    writeln!(dest, "pub mod types {{")?;
-    writeln!(dest, "    use wasm_bindgen::JsValue;")?;
-    for (name, ty) in registry.iter_types(NamedType::as_typedef) {
-        let ty = if let Some(&fixup) = fixups.get(name.as_str()) {
-            fixup.to_owned()
-        } else {
-            types::stringify_return(ty, registry)
-        };
-        writeln!(dest, "    pub type {name} = {ty};", name = name, ty = ty)?;
-    }
-    writeln!(dest, "}}")?;
-    writeln!(dest, "use types::*;")?;
-    Ok(())
-}
-
 pub struct WebSysGen;
 impl Generator for WebSysGen {
     fn write<W>(&self, registry: &Registry, dest: &mut W) -> std::io::Result<()>
@@ -115,9 +93,10 @@ impl Generator for WebSysGen {
         W: std::io::Write,
     {
         write_header(registry, dest)?;
-        write_typedefs(registry, dest)?;
+        types::write_defs(registry, dest)?;
         dicts::write(registry, dest)?;
         interfaces::write(registry, dest)?;
+        compat::write(registry, dest)?;
         Ok(())
     }
 }
