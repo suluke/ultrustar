@@ -4739,6 +4739,7 @@ version = "0.1.0"
 dependencies = [
  "gl_generator_websys",
  "js-sys",
+ "static_assertions",
  "wasm-bindgen",
  "web-sys",
 ]
