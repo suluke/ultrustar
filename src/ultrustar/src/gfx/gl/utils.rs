@@ -106,11 +106,34 @@ fn create_program(vert_src: &str, frag_src: &str) -> u32 {
         let vs = create_shader(gl::VERTEX_SHADER, vert_src);
         let fs = create_shader(gl::FRAGMENT_SHADER, frag_src);
         let program = gl::CreateProgram();
+
         gl::AttachShader(program, vs);
         gl::AttachShader(program, fs);
         gl::LinkProgram(program);
-        gl::UseProgram(program);
-        check_error();
+
+        gl::DeleteShader(fs);
+        gl::DeleteShader(vs);
+
+        let mut is_linked: GLint = 0;
+        gl::GetProgramiv(program, gl::LINK_STATUS, &mut is_linked as *mut GLint);
+        if is_linked == gl::FALSE as GLint {
+            let mut max_length: GLint = 0;
+            gl::GetProgramiv(program, gl::INFO_LOG_LENGTH, &mut max_length as *mut GLint);
+
+            // The max_length includes the NULL character
+            let mut error_log: Vec<GLchar> = Vec::with_capacity(max_length as usize);
+            error_log.resize(max_length as usize, 0);
+            gl::GetProgramInfoLog(
+                program,
+                max_length,
+                &mut max_length as *mut GLint,
+                error_log.as_mut_ptr(),
+            );
+            error!("{:?}", std::ffi::CStr::from_ptr(error_log.as_ptr()));
+
+            gl::DeleteProgram(program); // Don't leak the program.
+            panic!("Failed to link program");
+        }
 
         program
     }
