@@ -61,6 +61,6 @@ impl MainUI {
         let (output, shapes) = self.ctx.run(raw_input, Self::build);
         let meshes = self.ctx.tessellate(shapes);
         self.events.handle_output(window, &self.ctx, output);
-        renderer.render(meshes);
+        renderer.render(&meshes);
     }
 }

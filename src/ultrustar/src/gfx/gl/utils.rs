@@ -3,6 +3,7 @@ use crate::platform::gl::{
     types::{GLchar, GLenum, GLint, GLuint},
 };
 use log::error;
+use std::ptr;
 
 /// Check for errors in `gl`
 ///
@@ -23,6 +24,24 @@ pub fn check_error() -> () {
             gl::OUT_OF_MEMORY => panic!("Out of memory"),
             _ => panic!("Unknown error"),
         };
+    }
+}
+
+pub struct Buffer(GLenum, GLuint);
+impl Buffer {
+    pub fn new(binding_point: GLenum, size: usize) -> Self {
+        #[allow(unsafe_code)]
+        unsafe {
+            let mut buffer: GLuint = 0;
+            gl::GenBuffers(1, &mut buffer as *mut GLuint);
+            gl::BindBuffer(binding_point, buffer);
+            gl::BufferData(binding_point, size.try_into().unwrap(), ptr::null(), gl::DYNAMIC_DRAW);
+            gl::BindBuffer(binding_point, 0);
+            Buffer(binding_point, buffer)
+        }
+    }
+
+    pub fn set_data<T>(&self, offset: usize, data: &Vec<T>) {
     }
 }
 
