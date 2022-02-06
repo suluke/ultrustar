@@ -210,6 +210,7 @@ impl PlatformApi for Platform {
             .unwrap()
             .dyn_into()
             .map_js_error()?;
+        ctx.get_extension("OES_element_index_uint").unwrap();
         gl::set_context(ctx);
 
         use winit::platform::web::WindowBuilderExtWebSys;

@@ -1,3 +1,5 @@
+use crate::features::TOKEN_UNSAFE;
+
 use super::{compat::FunctionAlternative, types};
 use webgl_generator::{
     Argument, Interface, Member, NamedType, Operation, Registry, Type, TypeKind, VisitOptions,
@@ -235,7 +237,12 @@ where
     } else {
         writeln!(dest, "#[allow(non_snake_case)]")?;
     }
-    write!(dest, "pub unsafe fn {name}", name = name)?;
+    write!(
+        dest,
+        "pub {unsafe_} fn {name}",
+        name = name,
+        unsafe_ = TOKEN_UNSAFE
+    )?;
     write_args(&op.args, registry, dest)?;
     write_return_signature(op.return_type.as_ref(), registry, dest)?;
     writeln!(dest, " {{")?;
