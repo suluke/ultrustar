@@ -89,8 +89,8 @@ where
     W: std::io::Write,
 {
     let mut fixups = std::collections::BTreeMap::new();
-    fixups.insert("GLintptr", "f64");
-    fixups.insert("GLsizeiptr", "f64");
+    fixups.insert("GLintptr", "*const std::ffi::c_void");
+    fixups.insert("GLsizeiptr", "i32");
 
     writeln!(dest, "pub mod types {{")?;
     writeln!(dest, "    use wasm_bindgen::JsValue;")?;
