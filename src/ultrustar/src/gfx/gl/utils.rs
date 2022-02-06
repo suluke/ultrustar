@@ -3,6 +3,8 @@ use crate::platform::gl::{
     types::{GLchar, GLenum, GLint, GLuint},
 };
 use log::error;
+use std::ffi::c_void;
+use std::mem;
 use std::ptr;
 
 /// Check for errors in `gl`
@@ -41,7 +43,27 @@ impl Buffer {
         }
     }
 
+    pub fn bind(&self) {
+        #[allow(unsafe_code)]
+        unsafe {
+            gl::BindBuffer(self.0, self.1);
+        }
+    }
+
+    pub fn unbind(&self) {
+        #[allow(unsafe_code)]
+        unsafe {
+            gl::BindBuffer(self.0, 0);
+        }
+    }
+
     pub fn set_data<T>(&self, offset: usize, data: &Vec<T>) {
+        self.bind();
+
+        #[allow(unsafe_code)]
+        unsafe {
+            gl::BufferSubData(self.0, offset as isize, (data.len() * mem::size_of::<T>()) as isize, data.as_ptr() as *const c_void);
+        }
     }
 }
 
