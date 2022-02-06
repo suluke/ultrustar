@@ -62,7 +62,7 @@ impl Buffer {
 
         #[allow(unsafe_code)]
         unsafe {
-            gl::BufferSubData(self.0, offset as isize, (data.len() * mem::size_of::<T>()) as isize, data.as_ptr() as *const c_void);
+            gl::BufferSubData(self.0, offset as gl::types::GLintptr, (data.len() * mem::size_of::<T>()) as gl::types::GLsizeiptr, data.as_ptr() as *const c_void);
         }
     }
 }

@@ -1,4 +1,4 @@
-use super::{types, compat::FunctionAlternative};
+use super::{compat::FunctionAlternative, types};
 use webgl_generator::{
     Argument, Interface, Member, NamedType, Operation, Registry, Type, TypeKind, VisitOptions,
 };
@@ -93,7 +93,7 @@ where
 
 /// There is at least one function that is only overloaded because it takes a pointer as argument
 /// and web_sys wants to give the option to use either u32 or f64 to represent the pointer (because
-/// js numbers and stuff). Since we typedef GL*ptr to f64 only one of those overloads is releveant
+/// js numbers and stuff). Since we typedef GL*ptr to u32 only one of those overloads is releveant
 /// for us and we only create one binding for it.
 fn unoverload(name: &str, op: &Operation) -> Option<&'static str> {
     let mut fixups = std::collections::BTreeMap::new();
@@ -154,7 +154,7 @@ fn get_websys_function_name(name: &str, op: &Operation, registry: &Registry) -> 
     let mut conj_gen = Some("_with").iter().chain(Some("_and").iter().cycle());
     if has_pointer_arg {
         result += conj_gen.next().unwrap();
-        result += "_f64";
+        result += "_i32";
     }
     if let Some(buff_ty) = has_buffer_arg {
         result += conj_gen.next().unwrap();
@@ -279,29 +279,42 @@ where
     W: std::io::Write,
 {
     for arg in args.iter() {
+        let argname = escape_ident(&arg.name);
         if let TypeKind::String = &arg.type_.kind {
-            let argname = escape_ident(&arg.name);
             writeln!(
                 dest,
                 "    let {argname} = std::ffi::CStr::from_ptr({argname}).to_str().unwrap();",
                 argname = &argname
             )?;
         } else if let TypeKind::Named(name) = &arg.type_.kind {
-            let resolved = registry.resolve_type(name);
-            if let NamedType::Interface(_) = resolved {
-                let argname = escape_ident(&arg.name);
+            if name == "GLintptr" {
                 writeln!(
                     dest,
-                    "    let {argname} = &std::mem::transmute::<_, web_sys::{tyname}>({argname});",
+                    "    let {argname} = {argname} as i32;",
+                    argname = &argname
+                )?;
+            } else {
+                let resolved = registry.resolve_type(name);
+                if let NamedType::Interface(_) = resolved {
+                    let argname = escape_ident(&arg.name);
+                    writeln!(
+                    dest,
+                    "    let {argname}_ = std::mem::MaybeUninit::new(std::mem::transmute::<_, web_sys::{tyname}>({argname}));",
                     argname = &argname,
                     tyname = name.replace("WebGL", "WebGl")
                 )?;
-                if arg.type_.optional {
                     writeln!(
                         dest,
-                        "    let {argname} = Some({argname});",
-                        argname = argname
+                        "    let {argname} = {argname}_.assume_init_ref();",
+                        argname = &argname,
                     )?;
+                    if arg.type_.optional {
+                        writeln!(
+                            dest,
+                            "    let {argname} = Some({argname});",
+                            argname = argname
+                        )?;
+                    }
                 }
             }
         }
@@ -391,6 +404,9 @@ where
     }
     if let TypeKind::Named(name) = &retty.kind {
         let resolved = registry.resolve_type(name);
+        if name.ends_with("ptr") {
+            write!(dest, " as i32 as *const std::ffi::c_void")?;
+        }
         if retty.optional {
             if let NamedType::Interface(_) = resolved {
                 if let Some(idxty) = ClassInfo::get(name).indexed_as {
