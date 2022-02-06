@@ -35,29 +35,32 @@ impl UiRenderer {
     }
 
     fn render(&self, inner_size: [u32; 2], pixels_per_point: f32, meshes: &Vec<ClippedMesh>) {
-        let mut vertices_offset: usize;
-        let mut indices_offset: usize;
-
-        vertices_offset = 0;
-        indices_offset = 0;
+        let mut indices_count: usize = 0;
         for mesh in meshes {
-            self.vertices.set_data(vertices_offset * mem::size_of::<Vertex>(), &mesh.1.vertices);
-            self.indices.set_data(indices_offset * mem::size_of::<u32>(), &mesh.1.indices);
-            vertices_offset += mesh.1.vertices.len();
-            indices_offset += mesh.1.indices.len();
+            indices_count += mesh.1.indices.len();
         }
+
+        let mut patched_indices: Vec<u32> = Vec::with_capacity(indices_count);
+        let mut vertex_offset: u32 = 0;
+        for mesh in meshes {
+            self.vertices.set_data(vertex_offset as usize, &mesh.1.vertices);
+            for i in &mesh.1.indices {
+                patched_indices.push(vertex_offset + i);
+            }
+            vertex_offset += mesh.1.indices.len() as u32;
+        }
+
+        self.indices.set_data(0, &patched_indices);
 
         self.program.activate();
 
-        vertices_offset = 0;
-        indices_offset = 0;
+        let mut index_offset: usize = 0;
         for mesh in meshes {
             #[allow(unsafe_code)]
             unsafe {
-                gl::DrawElementsBaseVertex(gl::TRIANGLES, mesh.1.indices.len().try_into().unwrap(), gl::UNSIGNED_INT, (indices_offset * mem::size_of::<u32>()) as *const c_void, vertices_offset.try_into().unwrap());
+                gl::DrawElements(gl::TRIANGLES, mesh.1.indices.len() as i32, gl::UNSIGNED_INT, (index_offset * mem::size_of::<u32>()) as *const c_void);
             }
-            vertices_offset += mesh.1.vertices.len();
-            indices_offset += mesh.1.indices.len();
+            index_offset += mesh.1.indices.len();
         }
     }
 }
