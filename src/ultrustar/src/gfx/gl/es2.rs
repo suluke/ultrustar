@@ -2,8 +2,8 @@ use super::utils::{Buffer, check_error, Program};
 use crate::platform::{gl, Platform, PlatformApi};
 use egui::epaint::{ClippedMesh, Vertex};
 use serde::{Deserialize, Serialize};
-use std::mem;
 use std::ffi::c_void;
+use std::mem;
 
 #[derive(Default, Serialize, Deserialize)]
 pub struct InitSettings;
@@ -17,6 +17,10 @@ const MAX_INDICES: usize = 65536;
 
 struct UiRenderer {
     program: Program,
+    program_v_position_location: i32,
+    program_transform_location: i32,
+    program_texture_location: i32,
+
     vertices: Buffer,
     indices: Buffer,
 }
@@ -29,9 +33,27 @@ pub struct Renderer {
 impl UiRenderer {
     fn new() -> UiRenderer {
         let program = Program::new(VERT_SRC, FRAG_SRC);
+        let program_v_position_location = program.get_attrib_location("v_position").unwrap();
+        let program_transform_location = program.get_uniform_location("transform").unwrap_or(-1);
+        let program_texture_location = program.get_uniform_location("texture").unwrap_or(-1);
         let vertices = Buffer::new(gl::ARRAY_BUFFER, MAX_VERTICES * mem::size_of::<Vertex>());
         let indices = Buffer::new(gl::ELEMENT_ARRAY_BUFFER, MAX_INDICES * mem::size_of::<u32>());
-        UiRenderer{program, vertices, indices}
+        UiRenderer{program, program_v_position_location, program_transform_location, program_texture_location, vertices, indices}
+    }
+
+    fn bind_vertex_arrays(&self) {
+        self.vertices.bind();
+        self.indices.bind();
+
+        let stride = mem::size_of::<Vertex>() as i32;
+        #[allow(unsafe_code)]
+        unsafe {
+            gl::VertexAttribPointer(self.program_v_position_location as u32, 2, gl::FLOAT, gl::FALSE, stride, 0 as *const c_void);
+            //TODO: uv
+            //TODO: color
+
+            gl::EnableVertexAttribArray(self.program_v_position_location as u32);
+        }
     }
 
     fn render(&self, inner_size: [u32; 2], pixels_per_point: f32, meshes: &Vec<ClippedMesh>) {
@@ -52,7 +74,16 @@ impl UiRenderer {
 
         self.indices.set_data(0, &patched_indices);
 
+        self.bind_vertex_arrays();
         self.program.activate();
+
+        #[allow(unsafe_code)]
+        unsafe {
+            gl::Enable(gl::BLEND);
+            gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
+
+            gl::Uniform4f(self.program_transform_location, 2.0 / (inner_size[0] as f32) / pixels_per_point, -2.0 / (inner_size[1] as f32) / pixels_per_point, -1.0, 1.0);
+        }
 
         let mut index_offset: usize = 0;
         for mesh in meshes {
@@ -138,5 +169,7 @@ impl crate::gfx::Renderer for Renderer {
         self.ui_renderer.render([1024, 768], 1., &meshes);
 
         self.window.swap_buffers().unwrap();
+
+        check_error();
     }
 }

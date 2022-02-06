@@ -3,12 +3,12 @@
     precision mediump float;
 #endif
 
-#ifdef NEW_SHADER_INTERFACE
-    out vec4 f_color;
-    // a dirty hack applied to support webGL2
-    #define gl_FragColor f_color
-#endif
+uniform sampler2D texture;
+
+varying vec2 uv;
+varying vec4 color;
 
 void main() {
-    gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    //gl_FragColor = vec4(color);
+    gl_FragColor = vec4(1.0, 1.0, 1.0, 0.25);
 }
