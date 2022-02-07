@@ -3,7 +3,6 @@ use crate::platform::gl::{
     types::{GLchar, GLenum, GLint, GLuint},
 };
 use log::error;
-use std::ffi::c_void;
 use std::mem;
 use std::ptr;
 
@@ -12,7 +11,7 @@ use std::ptr;
 /// # Panics
 ///
 /// This function will panic if a `gl` error is encountered
-pub fn check_error() -> () {
+pub fn check_error() {
     #[allow(unsafe_code)]
     unsafe {
         let error = gl::GetError();
@@ -37,7 +36,12 @@ impl Buffer {
             let mut buffer: GLuint = 0;
             gl::GenBuffers(1, &mut buffer as *mut GLuint);
             gl::BindBuffer(binding_point, buffer);
-            gl::BufferData(binding_point, size.try_into().unwrap(), ptr::null(), gl::DYNAMIC_DRAW);
+            gl::BufferData(
+                binding_point,
+                size.try_into().unwrap(),
+                ptr::null(),
+                gl::DYNAMIC_DRAW,
+            );
             gl::BindBuffer(binding_point, 0);
             Buffer(binding_point, buffer)
         }
@@ -50,19 +54,26 @@ impl Buffer {
         }
     }
 
-    pub fn unbind(&self) {
+    pub fn _unbind(&self) {
         #[allow(unsafe_code)]
         unsafe {
             gl::BindBuffer(self.0, 0);
         }
     }
 
-    pub fn set_data<T>(&self, offset: usize, data: &Vec<T>) {
+    pub fn set_data<T>(&self, offset: isize, data: &[T]) {
         self.bind();
 
-        #[allow(unsafe_code)]
+        #[allow(unsafe_code, clippy::cast_possible_wrap)]
         unsafe {
-            gl::BufferSubData(self.0, offset as gl::types::GLintptr, (data.len() * mem::size_of::<T>()) as gl::types::GLsizeiptr, data.as_ptr() as *const c_void);
+            gl::BufferSubData(
+                self.0,
+                offset as gl::types::GLintptr,
+                (data.len() * mem::size_of::<T>())
+                    .try_into()
+                    .expect("Buffer data exceeds half address space size"),
+                data.as_ptr().cast::<std::ffi::c_void>(),
+            );
         }
     }
 }
@@ -77,10 +88,10 @@ impl Program {
         unsafe {
             let name_c = std::ffi::CString::new(name).unwrap();
             let pos = gl::GetUniformLocation(self.0, name_c.as_ptr());
-            if pos != -1 {
-                Some(pos)
-            } else {
+            if pos == -1 {
                 None
+            } else {
+                Some(pos)
             }
         }
     }
@@ -89,10 +100,10 @@ impl Program {
         unsafe {
             let name_c = std::ffi::CString::new(name).unwrap();
             let pos = gl::GetAttribLocation(self.0, name_c.as_ptr());
-            if pos != -1 {
-                Some(pos)
-            } else {
+            if pos == -1 {
                 None
+            } else {
+                Some(pos)
             }
         }
     }
@@ -108,8 +119,11 @@ fn create_shader(type_: GLenum, src: &str) -> GLuint {
     #[allow(unsafe_code)]
     unsafe {
         let shader = gl::CreateShader(type_);
-        let src_ptr = src.as_bytes().as_ptr() as *const i8;
-        let src_len: GLint = src.len() as GLint;
+        let src_ptr = src.as_bytes().as_ptr().cast::<i8>();
+        let src_len: GLint = src
+            .len()
+            .try_into()
+            .expect("Shader source size exceeds address space");
         gl::ShaderSource(
             shader,
             1,
@@ -119,13 +133,14 @@ fn create_shader(type_: GLenum, src: &str) -> GLuint {
         gl::CompileShader(shader);
         let mut is_compiled: GLint = 0;
         gl::GetShaderiv(shader, gl::COMPILE_STATUS, &mut is_compiled as *mut GLint);
-        if is_compiled == gl::FALSE as GLint {
+        if is_compiled == GLint::from(gl::FALSE) {
             let mut max_length: GLint = 0;
+            #[allow(clippy::cast_sign_loss)]
             gl::GetShaderiv(shader, gl::INFO_LOG_LENGTH, &mut max_length as *mut GLint);
 
             // The max_length includes the NULL character
-            let mut error_log: Vec<GLchar> = Vec::with_capacity(max_length as usize);
-            error_log.resize(max_length as usize, 0);
+            #[allow(clippy::cast_sign_loss)]
+            let mut error_log: Vec<GLchar> = vec![0; max_length as usize];
             gl::GetShaderInfoLog(
                 shader,
                 max_length,
@@ -157,13 +172,13 @@ fn create_program(vert_src: &str, frag_src: &str) -> u32 {
 
         let mut is_linked: GLint = 0;
         gl::GetProgramiv(program, gl::LINK_STATUS, &mut is_linked as *mut GLint);
-        if is_linked == gl::FALSE as GLint {
+        if is_linked == GLint::from(gl::FALSE) {
             let mut max_length: GLint = 0;
             gl::GetProgramiv(program, gl::INFO_LOG_LENGTH, &mut max_length as *mut GLint);
 
             // The max_length includes the NULL character
-            let mut error_log: Vec<GLchar> = Vec::with_capacity(max_length as usize);
-            error_log.resize(max_length as usize, 0);
+            #[allow(clippy::cast_sign_loss)]
+            let mut error_log: Vec<GLchar> = vec![0; max_length as usize];
             gl::GetProgramInfoLog(
                 program,
                 max_length,

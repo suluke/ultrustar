@@ -20,7 +20,7 @@ pub trait Renderer: Sized {
     fn get_window(&self) -> &crate::Window;
 
     /// Refresh the graphical representation
-    fn render(&self, meshes: &Vec<ClippedMesh>);
+    fn render(&self, meshes: Vec<ClippedMesh>);
 }
 
 pub mod gl;

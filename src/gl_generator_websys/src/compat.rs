@@ -1,5 +1,5 @@
-use webgl_generator::Registry;
 use crate::runtime::{patches, CONSTANTS};
+use webgl_generator::Registry;
 
 fn write_constants<W>(_registry: &Registry, dest: &mut W) -> std::io::Result<()>
 where
@@ -56,10 +56,7 @@ fn write_functions<W>(_registry: &Registry, dest: &mut W) -> std::io::Result<()>
 where
     W: std::io::Write,
 {
-    writeln!(
-        dest, "{}",
-        crate::runtime::POLYFILLS
-    )?;
+    writeln!(dest, "{}", crate::runtime::POLYFILLS)?;
     for alt in FunctionAlternative::get_all() {
         writeln!(dest, "{}", alt.code)?;
     }
