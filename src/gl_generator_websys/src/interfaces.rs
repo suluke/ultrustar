@@ -94,7 +94,7 @@ where
 }
 
 /// There is at least one function that is only overloaded because it takes a pointer as argument
-/// and web_sys wants to give the option to use either u32 or f64 to represent the pointer (because
+/// and `web_sys` wants to give the option to use either u32 or f64 to represent the pointer (because
 /// js numbers and stuff). Since we typedef GL*ptr to u32 only one of those overloads is releveant
 /// for us and we only create one binding for it.
 fn unoverload(name: &str, op: &Operation) -> Option<&'static str> {
@@ -210,10 +210,6 @@ fn write_member_op<W>(
 where
     W: std::io::Write,
 {
-    if FunctionAlternative::get(name).is_some() {
-        // will be written by compat
-        return Ok(());
-    }
     const FALLIBLE_RESULTS: [&str; 1] = ["ReadPixels"];
     const OPS_WRONG_TYPES: [&str; 9] = [
         // Not in regular GLES
@@ -229,6 +225,11 @@ where
         "GetFramebufferAttachmentParameter",
         "GetVertexAttrib",
     ];
+
+    if FunctionAlternative::get(name).is_some() {
+        // will be written by compat
+        return Ok(());
+    }
 
     let websys_name = get_websys_function_name(name, op, registry);
     let disabled = OPS_WRONG_TYPES.contains(&name);

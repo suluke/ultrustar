@@ -11,9 +11,8 @@ fn prelude() -> String {
 lazy_static! {
     pub static ref PRELUDE: String = prelude();
 }
-pub const POLYFILLS: &'static str = include_str!("polyfills.rs");
-pub const CONSTANTS: &'static str = include_str!("constants.rs");
-
+pub const POLYFILLS: &str = include_str!("polyfills.rs");
+pub const CONSTANTS: &str = include_str!("constants.rs");
 
 #[cfg(test)]
 mod test {

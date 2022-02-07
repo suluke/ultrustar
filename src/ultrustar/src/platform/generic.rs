@@ -1,6 +1,7 @@
 use crate::{gfx::Renderer, platform::PlatformApi, Event, EventLoop, Signals, UserData};
 use anyhow::anyhow;
 use directories::ProjectDirs;
+use glutin::{Api, GlRequest};
 use log::info;
 use std::{fs::File, path::PathBuf};
 use winit::{
@@ -8,7 +9,6 @@ use winit::{
     event_loop::{ControlFlow, EventLoopWindowTarget},
     window::WindowBuilder,
 };
-use glutin::{Api, GlRequest};
 
 pub use gl;
 
@@ -34,7 +34,9 @@ impl PlatformApi for Platform {
 
     fn create_gl_window(&self) -> Result<Self::GlWindow, anyhow::Error> {
         let window = WindowBuilder::new().with_title("Ultrustar");
-        let gl_window = glutin::ContextBuilder::new().with_gl(GlRequest::Specific(Api::OpenGlEs, (2, 0))).build_windowed(window, &self.event_loop)?;
+        let gl_window = glutin::ContextBuilder::new()
+            .with_gl(GlRequest::Specific(Api::OpenGlEs, (2, 0)))
+            .build_windowed(window, &self.event_loop)?;
 
         #[allow(unsafe_code)]
         let gl_window = unsafe { gl_window.make_current().map_err(|(_, err)| err)? };
