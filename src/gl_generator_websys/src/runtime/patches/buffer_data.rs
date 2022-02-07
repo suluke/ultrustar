@@ -5,7 +5,7 @@ pub unsafe fn BufferData(
     data: *const core::ffi::c_void,
     usage: GLenum) {{
     withctx!(CONTEXT, ctx, {{
-        let data = std::slice::from_raw_parts(data as *const u8, *(size as *const usize));
+        let data = std::slice::from_raw_parts(data as *const u8, size as usize);
         ctx.buffer_data_with_u8_array(target, data, usage);
     }})
 }}
