@@ -18,7 +18,7 @@ impl FunctionAlternative {
     pub fn get(name: &str) -> Option<Self> {
         Self::get_all().iter().cloned().find(|alt| alt.name == name)
     }
-    pub fn get_all() -> [Self; 5] {
+    pub fn get_all() -> [Self; 12] {
         [
             Self {
                 name: "BufferData",
@@ -40,6 +40,34 @@ impl FunctionAlternative {
                 name: "GetProgramInfoLog",
                 code: patches::GET_PROGRAM_INFO_LOG,
             },
+            Self {
+                name: "GetAttachedShaders",
+                code: patches::GET_ATTACHED_SHADERS,
+            },
+            Self {
+                name: "GetExtension",
+                code: patches::GET_EXTENSION,
+            },
+            Self {
+                name: "GetFramebufferAttachmentParameter",
+                code: patches::GET_FRAMEBUFFER_ATTACHMENT_PARAMETER,
+            },
+            Self {
+                name: "GetParameter",
+                code: patches::GET_PARAMETER,
+            },
+            Self {
+                name: "GetShaderSource",
+                code: patches::GET_SHADER_SOURCE,
+            },
+            Self {
+                name: "GetSupportedExtensions",
+                code: patches::GET_SUPPORTED_EXTENSIONS,
+            },
+            Self {
+                name: "GetVertexAttrib",
+                code: patches::GET_VERTEX_ATTRIB,
+            },
         ]
     }
 }
@@ -49,6 +77,8 @@ where
     W: std::io::Write,
 {
     writeln!(dest, "pub type GLchar = i8;")?;
+    writeln!(dest, "pub type GLdouble = f64;")?;
+    writeln!(dest, "pub type GLint64 = i64;")?;
     Ok(())
 }
 
