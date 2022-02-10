@@ -1,4 +1,5 @@
 #[allow(non_snake_case)]
+#[with_gl_context(CONTEXT as ctx)]
 pub unsafe fn ShaderSource(
     shader: GLuint,
     count: types::GLsizei,
@@ -12,7 +13,7 @@ pub unsafe fn ShaderSource(
             len as usize,
         ));
         let shdr: web_sys::WebGlShader = std::mem::transmute::<_, _>(shader);
-        withctx!(CONTEXT, ctx, { ctx.shader_source(&shdr, src) });
+        ctx.shader_source(&shdr, src);
         // Don't allow the wasm_bindgen glue to forget the shader object
         std::mem::forget(shdr);
     } else {
@@ -30,7 +31,7 @@ pub unsafe fn ShaderSource(
             src += part;
         }
         let shdr: web_sys::WebGlShader = std::mem::transmute::<_, _>(shader);
-        withctx!(CONTEXT, ctx, { ctx.shader_source(&shdr, &src) });
+        ctx.shader_source(&shdr, &src);
         // Don't allow the wasm_bindgen glue to forget the shader object
         std::mem::forget(shdr);
     }

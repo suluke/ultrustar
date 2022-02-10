@@ -238,6 +238,7 @@ where
     } else {
         writeln!(dest, "#[allow(non_snake_case)]")?;
     }
+    writeln!(dest, "#[with_gl_context(CONTEXT as ctx)]")?;
     write!(
         dest,
         "pub {unsafe_} fn {name}",
@@ -253,9 +254,9 @@ where
         writeln!(dest, "    todo!()")?;
     } else {
         write_param_casts(&op.args, registry, dest)?;
-        write!(dest, "    withctx!(CONTEXT, ctx, {{ctx.{}", websys_name)?;
+        write!(dest, "    ctx.{}", websys_name)?;
         write_params(&op.args, dest)?;
-        writeln!(dest, "}})")?;
+        writeln!(dest)?;
         if FALLIBLE_RESULTS.contains(&name) {
             writeln!(dest, "    .handle_js_error()")?;
         }

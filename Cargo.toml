@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "src/gl_generator_websys",
+    "src/proc_macro_with_gl_context",
     "src/ultrustar",
     "src/websys_gles2",
     "xtask/checkit",
