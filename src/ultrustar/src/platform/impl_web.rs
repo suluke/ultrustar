@@ -153,6 +153,7 @@ impl PlatformApi for Platform {
     type Renderer = crate::core::gfx::gl::RendererES2;
     type InitError = JsValue;
     type GlWindow = GlWindow;
+    type Audio = super::audio::Platform;
 
     fn init(settings: Self::Settings) -> Result<Self, Self::InitError> {
         let canvas = create_canvas()?;

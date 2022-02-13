@@ -31,6 +31,7 @@ impl PlatformApi for Platform {
     type Renderer = crate::gfx::gl::RendererES2;
     type InitError = ();
     type GlWindow = glutin::WindowedContext<glutin::PossiblyCurrent>;
+    type Audio = super::audio::Platform;
 
     fn create_gl_window(&self) -> Result<Self::GlWindow, anyhow::Error> {
         let window = WindowBuilder::new().with_title("Ultrustar");

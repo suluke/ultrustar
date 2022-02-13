@@ -1,0 +1,133 @@
+#ARTIST:Thor
+#TITLE:Free Software Song
+#MP3:Thor - Free Software Song.ogg
+#BACKGROUND:backdrop.jpg
+#COVER:cover.png
+#BPM:75,15
+#GAP:14200
+: 0 2 7 Join
+: 2 2 5 us
+: 4 2 4 now
+: 6 2 2 and
+: 8 2 0 share
+: 10 2 2 the
+: 12 2 4 soft
+: 14 2 0 ware
+- 16
+: 16 4 0 You'll
+: 20 2 2 be
+: 22 2 4 -
+: 24 4 5 free
+: 28 2 4 ha
+: 30 2 7 cker,
+: 32 4 2 you'll
+: 36 4 2 be
+: 41 1 7 free
+: 42 1 9 -
+: 43 1 7 -
+: 44 1 5 -
+: 45 3 4 -
+- 48
+: 48 2 7 Join
+: 50 2 5 us
+: 52 2 4 now
+: 54 2 2 and
+: 56 2 0 share
+: 58 2 2 the
+: 60 2 4 soft
+: 62 2 0 ware
+- 64
+: 64 4 0 You'll
+: 68 2 2 be
+: 70 2 4 -
+: 72 4 5 free
+: 76 2 4 ha
+: 78 2 7 cker,
+: 80 4 2 you'll
+: 84 4 2 be
+: 88 4 2 free
+- 94
+: 96 2 7 Hoar
+: 98 2 5 ders
+: 100 2 4 may
+: 102 2 2 get
+: 104 2 0 piles
+: 106 2 2 of
+: 108 2 4 mo
+: 110 2 0 ney
+- 112
+: 112 4 0 That
+: 116 2 2 is
+: 118 2 4 -
+: 120 4 5 true
+: 124 2 4 ha
+: 126 2 7 ckers,
+: 128 4 2 that
+: 132 4 2 is
+: 137 1 7 true
+: 138 1 9 -
+: 139 1 7 -
+: 140 1 5 -
+: 141 3 4 -
+- 144
+: 144 2 7 But
+: 146 2 5 they
+: 148 2 4 can
+: 150 2 2 not
+: 152 2 0 help
+: 154 2 2 their
+: 156 2 4 neigh
+: 158 2 0 bors
+- 160
+: 160 4 0 That's
+: 164 2 2 not
+: 166 2 4 -
+: 168 4 5 good
+: 172 2 4 ha
+: 174 2 7 ckers,
+: 176 4 2 that's
+: 180 4 2 not
+: 184 4 2 good
+- 190
+: 192 2 7 When
+: 194 2 5 we
+: 196 2 4 have
+: 198 2 2 e
+: 200 2 0 nough
+: 202 2 2 free
+: 204 2 4 soft
+: 206 2 0 ware
+- 208
+: 208 4 0 at
+: 212 2 2 our
+: 214 2 4 -
+: 216 4 5 call
+: 220 2 4 ha
+: 222 2 7 ckers,
+: 224 4 2 at
+: 228 4 2 our
+: 233 1 7 call
+: 234 1 9 -
+: 235 1 7 -
+: 236 1 5 -
+: 237 3 4 -
+- 240
+: 240 2 7 We'll
+: 242 2 5 kick
+: 244 2 4 out
+: 246 2 2 those
+: 248 2 0 dir
+: 250 2 2 ty
+: 252 2 4 li
+: 254 2 0 cen
+: 256 4 0 ces
+- 260
+: 260 2 2 e
+: 262 2 4 ver
+: 264 4 5 more
+: 268 2 4 ha
+: 270 2 7 ckers,
+: 272 4 2 e
+: 276 4 2 ver
+: 280 4 2 more
+E

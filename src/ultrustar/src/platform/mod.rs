@@ -1,6 +1,8 @@
 use crate::{Event, Signals};
 use winit::event_loop::EventLoopWindowTarget;
 
+pub mod audio;
+
 /// Documentation trait for what APIs a platform implementation needs to expose
 #[allow(clippy::module_name_repetitions)]
 pub trait PlatformApi: Sized {
@@ -15,6 +17,9 @@ pub trait PlatformApi: Sized {
 
     /// Implementation of a window offering `OpenGl` functionality on the current platform.
     type GlWindow: Sized;
+
+    /// Low-level audio interfaces.
+    type Audio: audio::PlatformApi;
 
     /// Create a new window which offers `OpenGl` graphics capabilities
     ///
@@ -68,11 +73,11 @@ pub trait PlatformApi: Sized {
 /// * module `gl` for [`gfx::gl::RendererES2`|`gfx::gl::RendererES2`]
 
 #[cfg(target_arch = "wasm32")]
-mod web;
+mod impl_web;
 #[cfg(target_arch = "wasm32")]
-pub use web::*;
+pub use impl_web::*;
 
 #[cfg(not(target_arch = "wasm32"))]
-mod generic;
+mod impl_generic;
 #[cfg(not(target_arch = "wasm32"))]
-pub use generic::*;
+pub use impl_generic::*;
