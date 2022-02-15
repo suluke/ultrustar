@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Note","A musical note encapsulating a clearly defined pitch."],["Platform",""]],"trait":[["NoteInput",""],["PlatformApi",""]]});

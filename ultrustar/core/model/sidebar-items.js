@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["library","Song library"]],"struct":[["GameState",""],["Player",""],["Song",""]],"trait":[["Accompaniment","Interface for subsystems that “accompany” a song while it’s played."]],"type":[["Score",""]]});

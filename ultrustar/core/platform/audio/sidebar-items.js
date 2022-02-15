@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["cpal",""]],"struct":[["Note","A musical note encapsulating a clearly defined pitch."]],"trait":[["NoteInput",""],["PlatformApi",""]]});

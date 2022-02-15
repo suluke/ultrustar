@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["gl_generator_websys"] = [{"text":"impl <a class=\"trait\" href=\"gl_generator_websys/trait.Generator.html\" title=\"trait gl_generator_websys::Generator\">Generator</a> for <a class=\"struct\" href=\"gl_generator_websys/struct.WebSysGen.html\" title=\"struct gl_generator_websys::WebSysGen\">WebSysGen</a>","synthetic":false,"types":["gl_generator_websys::WebSysGen"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

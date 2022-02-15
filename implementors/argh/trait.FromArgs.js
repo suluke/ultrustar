@@ -1,0 +1,4 @@
+(function() {var implementors = {};
+implementors["checkit"] = [{"text":"impl FromArgs for <a class=\"struct\" href=\"checkit/struct.Cli.html\" title=\"struct checkit::Cli\">Cli</a>","synthetic":false,"types":["checkit::Cli"]}];
+implementors["wasm"] = [{"text":"impl FromArgs for <a class=\"struct\" href=\"wasm/struct.Cli.html\" title=\"struct wasm::Cli\">Cli</a>","synthetic":false,"types":["wasm::Cli"]},{"text":"impl FromArgs for <a class=\"enum\" href=\"wasm/enum.CliSubcommands.html\" title=\"enum wasm::CliSubcommands\">CliSubcommands</a>","synthetic":false,"types":["wasm::CliSubcommands"]},{"text":"impl FromArgs for <a class=\"struct\" href=\"wasm/struct.CliServe.html\" title=\"struct wasm::CliServe\">CliServe</a>","synthetic":false,"types":["wasm::CliServe"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["check_error","Check for errors in `gl`"],["create_program",""],["create_shader",""]],"struct":[["Buffer",""],["Program",""]]});

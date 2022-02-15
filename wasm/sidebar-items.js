@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["CliSubcommands",""]],"fn":[["build",""],["main",""],["project_root",""],["serve",""],["target_dir",""]],"struct":[["Cli","Utility to build the wasm target"],["CliServe","Start a web server to serve the project"]]});

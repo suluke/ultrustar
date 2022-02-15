@@ -1,0 +1,1 @@
+window.ALL_CRATES = ["checkit","gl_generator_websys","ultrustar","ultrustar_core","wasm","websys_gles2"];
