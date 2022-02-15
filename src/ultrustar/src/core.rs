@@ -9,6 +9,8 @@
     clippy::suspicious
 )]
 #![allow(clippy::module_name_repetitions)]
+use log::info;
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 #[path = "./platform/mod.rs"]
 pub mod platform;
@@ -22,14 +24,15 @@ pub mod ui;
 #[path = "./model/mod.rs"]
 pub mod model;
 
-use log::info;
-use platform::{Platform, PlatformApi};
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use gfx::Renderer as RendererApi;
+use platform::{audio::PlatformApi as AudioApi, Platform, PlatformApi};
+
+use crate::platform::audio::NoteInput;
 
 pub trait SettingsTrait: Default + Serialize + DeserializeOwned {}
 
 type Renderer = <Platform as PlatformApi>::Renderer;
-use gfx::Renderer as RendererApi;
+type Audio = <Platform as PlatformApi>::Audio;
 
 #[derive(Serialize, Deserialize)]
 pub struct User {
@@ -64,6 +67,8 @@ pub struct UserData {
     ui: ui::MainUISettings,
     #[serde(default)]
     library: model::library::Settings,
+    #[serde(default)]
+    audio: <Audio as AudioApi>::InitSettings,
 }
 impl SettingsTrait for UserData {}
 
@@ -77,6 +82,9 @@ pub fn run(platform: Platform) {
     (|| -> anyhow::Result<()> {
         let userdata = Platform::load_userdata("default")?;
         let renderer = platform.create_renderer(&userdata.gfx)?;
+        let audio = Audio::init(&userdata.audio)?;
+        let note_input = audio.default_note_input()?;
+        info!("Audio Inputs: {:?}", audio.list_note_inputs());
         let library = model::Library::init(&userdata.library);
         let mut main_ui = ui::MainUI::new(&userdata.ui, renderer.get_window());
         info!("Library with {} songs", library.len());
@@ -84,6 +92,7 @@ pub fn run(platform: Platform) {
             Event::RedrawRequested(_) => main_ui.render(&renderer),
             Event::UserEvent(Signals::Exit) => {
                 Platform::persist_userdata(&userdata).expect("Persisting settings failed");
+                note_input.read_current().unwrap();
             }
             Event::WindowEvent { event, .. } => main_ui.push_event(event),
             _ => (),

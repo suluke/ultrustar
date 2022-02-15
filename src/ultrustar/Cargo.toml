@@ -21,6 +21,9 @@ env_logger = "0.9"
 log = "0.4"
 # Audio
 cpal = "0.13"
+tune = "0.29"
+rustfft = "6.0"
+crossbeam-channel = "0.5"
 # Game controllers
 gilrs = { version = "0.8", features = ["wasm-bindgen"] }
 # Windowing + Event Loop
