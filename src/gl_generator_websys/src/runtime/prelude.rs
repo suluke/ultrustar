@@ -1,3 +1,4 @@
+use proc_macro_with_gl_context::with_gl_context;
 use std::cell::RefCell;
 use wasm_bindgen::JsValue;
 use web_sys::WebGlRenderingContext;
@@ -9,19 +10,10 @@ pub fn set_context(ctx: WebGlRenderingContext) {
         *tls_ctx.borrow_mut() = Some(ctx);
     });
 }
-macro_rules! withctx {
-    ($global:ident, $local:ident, $code:block) => {
-        $global.with(|ctx| {
-            let scope = ctx.borrow();
-            let $local = scope.as_ref().expect("WebGlRenderingContext not set for current thread");
-            $code
-        })
-    };
-}
 
 struct Error {
     #[allow(unused)]
-    details: JsValue
+    details: JsValue,
 }
 thread_local!(static ERROR: RefCell<Option<Error>> = RefCell::new(None));
 trait HandleJsError {
@@ -32,7 +24,7 @@ impl<T> HandleJsError for Result<T, JsValue> {
     type Output = T;
     fn handle_js_error(self) {
         if let Err(details) = self {
-            ERROR.with(|err| *err.borrow_mut() = Some(Error{details}));
+            ERROR.with(|err| *err.borrow_mut() = Some(Error { details }));
         }
     }
 }

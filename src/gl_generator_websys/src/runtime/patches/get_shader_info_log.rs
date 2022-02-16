@@ -1,20 +1,19 @@
 #[allow(non_snake_case)]
+#[with_gl_context(CONTEXT as ctx)]
 pub unsafe fn GetShaderInfoLog(
     shader: types::GLuint,
     bufSize: types::GLsizei,
     length: *mut types::GLsizei,
     infoLog: *mut types::GLchar,
 ) {
-    withctx!(CONTEXT, ctx, {
-        let shader_ =
-            std::mem::MaybeUninit::new(std::mem::transmute::<_, web_sys::WebGlShader>(shader));
-        let shader = shader_.assume_init_ref();
-        if let Some(string) = ctx.get_shader_info_log(shader) {
-            let len: usize = (bufSize as usize).min(string.len());
-            let written = string[0..len].as_bytes();
-            let target = std::slice::from_raw_parts_mut(infoLog as *mut u8, len);
-            target.copy_from_slice(written);
-            *length = len as types::GLsizei;
-        }
-    });
+    let shader_ =
+        std::mem::MaybeUninit::new(std::mem::transmute::<_, web_sys::WebGlShader>(shader));
+    let shader = shader_.assume_init_ref();
+    if let Some(string) = ctx.get_shader_info_log(shader) {
+        let len: usize = (bufSize as usize).min(string.len());
+        let written = string[0..len].as_bytes();
+        let target = std::slice::from_raw_parts_mut(infoLog as *mut u8, len);
+        target.copy_from_slice(written);
+        *length = len as types::GLsizei;
+    }
 }

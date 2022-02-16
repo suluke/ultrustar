@@ -16,7 +16,7 @@ pub const CONSTANTS: &str = include_str!("constants.rs");
 
 #[cfg(test)]
 mod test {
-    #![allow(unsafe_code)]
+    #![allow(unsafe_code, unused_imports)]
     use gl::{types, *};
     pub type GLboolean = bool;
 

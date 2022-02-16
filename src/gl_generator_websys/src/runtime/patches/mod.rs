@@ -14,7 +14,7 @@ pub const SHADER_SOURCE: &str = include_str!("shader_source.rs");
 
 #[cfg(test)] // compile test
 mod test {
-    #![allow(unsafe_code)]
+    #![allow(unsafe_code, unused_imports)]
     use gl::types::{self, *};
     include!("../prelude.rs");
 

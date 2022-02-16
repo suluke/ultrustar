@@ -1903,6 +1903,7 @@ dependencies = [
  "gl",
  "heck 0.4.0",
  "lazy_static 1.4.0",
+ "proc_macro_with_gl_context",
  "wasm-bindgen",
  "web-sys",
  "webgl_generator",
@@ -3264,6 +3265,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b9f5105d4fdaab20335ca9565e106a5d9b82b6219b5ba735731124ac6711d23d"
 dependencies = [
  "unicode-xid 0.2.2",
+]
+
+[[package]]
+name = "proc_macro_with_gl_context"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote 1.0.9",
+ "syn 1.0.78",
 ]
 
 [[package]]
@@ -4918,6 +4928,7 @@ version = "0.1.0"
 dependencies = [
  "gl_generator_websys",
  "js-sys",
+ "proc_macro_with_gl_context",
  "static_assertions",
  "wasm-bindgen",
  "web-sys",
