@@ -1,6 +1,7 @@
-use super::utils::{check_error, Buffer, Program};
+use super::utils::{check_error, Buffer, Program, Texture};
 use crate::platform::{gl, Platform, PlatformApi};
-use egui::epaint::{ClippedMesh, Vertex};
+use egui::epaint::{ClippedMesh, FontImage, Vertex};
+use egui::TextureId;
 use serde::{Deserialize, Serialize};
 use std::ffi::c_void;
 use std::mem;
@@ -16,11 +17,15 @@ const MAX_VERTICES: usize = 65536;
 const MAX_INDICES: usize = 65536;
 
 struct UiRenderer {
+    egui_texture: Texture,
+    egui_texture_version: u64,
+
     program: Program,
-    program_v_position_location: i32,
-    program_transform_location: i32,
-    #[allow(dead_code)]
-    program_texture_location: i32,
+    program_v_position_location: Option<i32>,
+    program_v_uv_location: Option<i32>,
+    program_v_color_location: Option<i32>,
+    program_transform_location: Option<i32>,
+    program_texture_location: Option<i32>,
 
     vertices: Buffer,
     indices: Buffer,
@@ -33,18 +38,26 @@ pub struct Renderer {
 
 impl UiRenderer {
     fn new() -> UiRenderer {
+        let egui_texture = Texture::new_uninitialized();
+        let egui_texture_version = 0;
         let program = Program::new(VERT_SRC, FRAG_SRC);
-        let program_v_position_location = program.get_attrib_location("v_position").unwrap();
-        let program_transform_location = program.get_uniform_location("transform").unwrap_or(-1);
-        let program_texture_location = program.get_uniform_location("texture").unwrap_or(-1);
+        let program_v_position_location = program.get_attrib_location("v_position");
+        let program_v_uv_location = program.get_attrib_location("v_uv");
+        let program_v_color_location = program.get_attrib_location("v_color");
+        let program_transform_location = program.get_uniform_location("transform");
+        let program_texture_location = program.get_uniform_location("texture");
         let vertices = Buffer::new(gl::ARRAY_BUFFER, MAX_VERTICES * mem::size_of::<Vertex>());
         let indices = Buffer::new(
             gl::ELEMENT_ARRAY_BUFFER,
             MAX_INDICES * mem::size_of::<u32>(),
         );
-        UiRenderer {
+        Self {
+            egui_texture,
+            egui_texture_version,
             program,
             program_v_position_location,
+            program_v_uv_location,
+            program_v_color_location,
             program_transform_location,
             program_texture_location,
             vertices,
@@ -52,11 +65,20 @@ impl UiRenderer {
         }
     }
 
+    fn update_font_image(&mut self, font_image: &FontImage) {
+        if font_image.version == self.egui_texture_version {
+            return;
+        }
+
+        self.egui_texture_version = font_image.version;
+        self.egui_texture.initialize(font_image.width, font_image.height, &font_image.pixels);
+    }
+
     fn bind_vertex_arrays(&self) {
         self.vertices.bind();
         self.indices.bind();
 
-        let stride = mem::size_of::<Vertex>();
+        let stride = 20; // TODO mem::size_of::<Vertex>();
         #[allow(unsafe_code)]
         unsafe {
             #![allow(
@@ -64,23 +86,49 @@ impl UiRenderer {
                 clippy::cast_possible_truncation,
                 clippy::cast_sign_loss
             )]
-            gl::VertexAttribPointer(
-                // FIXME use stronger type
-                self.program_v_position_location as gl::types::GLuint,
-                2,
-                gl::FLOAT,
-                gl::FALSE,
-                stride as gl::types::GLsizei,
-                std::ptr::null::<c_void>(),
-            );
-            //TODO: uv
-            //TODO: color
+            if self.program_v_position_location.is_some() {
+                gl::VertexAttribPointer(
+                    // FIXME use stronger type
+                    self.program_v_position_location.unwrap() as gl::types::GLuint,
+                    2,
+                    gl::FLOAT,
+                    gl::FALSE,
+                    stride as gl::types::GLsizei,
+                    0 as *const c_void, // TODO offsetof
+                );
 
-            gl::EnableVertexAttribArray(self.program_v_position_location as u32);
+                gl::EnableVertexAttribArray(self.program_v_position_location.unwrap() as u32);
+            }
+            if self.program_v_uv_location.is_some() {
+                gl::VertexAttribPointer(
+                    // FIXME use stronger type
+                    self.program_v_uv_location.unwrap() as gl::types::GLuint,
+                    2,
+                    gl::FLOAT,
+                    gl::FALSE,
+                    stride as gl::types::GLsizei,
+                    8 as *const c_void, // TODO offsetof
+                );
+
+                gl::EnableVertexAttribArray(self.program_v_uv_location.unwrap() as u32);
+            }
+            if self.program_v_color_location.is_some() {
+                gl::VertexAttribPointer(
+                    // FIXME use stronger type
+                    self.program_v_color_location.unwrap() as gl::types::GLuint,
+                    4,
+                    gl::UNSIGNED_BYTE,
+                    gl::FALSE,
+                    stride as gl::types::GLsizei,
+                    16 as *const c_void, // TODO offsetof
+                );
+
+                gl::EnableVertexAttribArray(self.program_v_color_location.unwrap() as u32);
+            }
         }
     }
 
-    fn render(&self, inner_size: [u32; 2], pixels_per_point: f32, meshes: Vec<ClippedMesh>) {
+    fn render(&mut self, inner_size: [u32; 2], pixels_per_point: f32, meshes: Vec<ClippedMesh>) {
         let mut indices_count: usize = 0;
         for mesh in &meshes {
             indices_count += mesh.1.indices.len();
@@ -108,18 +156,36 @@ impl UiRenderer {
             gl::Enable(gl::BLEND);
             gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
 
-            #[allow(clippy::cast_precision_loss)]
-            gl::Uniform4f(
-                self.program_transform_location,
-                2.0 / (inner_size[0] as f32) / pixels_per_point,
-                -2.0 / (inner_size[1] as f32) / pixels_per_point,
-                -1.0,
-                1.0,
-            );
+            if self.program_transform_location.is_some() {
+                #[allow(clippy::cast_precision_loss)]
+                gl::Uniform4f(
+                    self.program_transform_location.unwrap(),
+                    2.0 / (inner_size[0] as f32) / pixels_per_point,
+                    -2.0 / (inner_size[1] as f32) / pixels_per_point,
+                    -1.0,
+                    1.0,
+                );
+            }
+
+            if self.program_texture_location.is_some() {
+                gl::Uniform1i(
+                    self.program_texture_location.unwrap(),
+                    0,
+                );
+            }
         }
 
         let mut index_offset: usize = 0;
+        let mut current_texture = TextureId::User(0);
         for mesh in meshes {
+            if current_texture != mesh.1.texture_id {
+                current_texture = mesh.1.texture_id;
+                match current_texture {
+                    TextureId::Egui => self.egui_texture.bind(),
+                    TextureId::User(_) => panic!("not implemented"),
+                }
+            }
+
             #[allow(
                 unsafe_code,
                 clippy::cast_possible_wrap,
@@ -204,7 +270,9 @@ impl crate::gfx::Renderer for Renderer {
         self.window.window()
     }
 
-    fn render(&self, meshes: Vec<ClippedMesh>) {
+    fn render(&mut self, meshes: Vec<ClippedMesh>, font_image: &FontImage) {
+        self.ui_renderer.update_font_image(font_image);
+
         #[allow(unsafe_code)]
         unsafe {
             gl::ClearColor(0.0, 0.0, 0.0, 1.0);

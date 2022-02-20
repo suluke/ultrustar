@@ -43,7 +43,7 @@ impl Buffer {
                 gl::DYNAMIC_DRAW,
             );
             gl::BindBuffer(binding_point, 0);
-            Buffer(binding_point, buffer)
+            Self(binding_point, buffer)
         }
     }
 
@@ -61,7 +61,7 @@ impl Buffer {
         }
     }
 
-    pub fn set_data<T>(&self, offset: isize, data: &[T]) {
+    pub fn set_data<T>(&mut self, offset: isize, data: &[T]) {
         self.bind();
 
         #[allow(unsafe_code, clippy::cast_possible_wrap)]
@@ -74,6 +74,41 @@ impl Buffer {
                     .expect("Buffer data exceeds half address space size"),
                 data.as_ptr().cast::<std::ffi::c_void>(),
             );
+        }
+    }
+}
+
+pub struct Texture(GLuint);
+impl Texture {
+    pub fn new_uninitialized() -> Self {
+        #[allow(unsafe_code)]
+        unsafe {
+            let mut texture: GLuint = 0;
+            gl::GenTextures(1, &mut texture as *mut GLuint);
+            gl::BindTexture(gl::TEXTURE_2D, texture);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR_MIPMAP_NEAREST as i32);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_R, gl::CLAMP_TO_EDGE as i32);
+            gl::BindTexture(gl::TEXTURE_2D, 0);
+            Self(texture)
+        }
+    }
+
+    pub fn initialize(&mut self, width: usize, height: usize, pixels: &[u8]) {
+        #[allow(unsafe_code)]
+        unsafe {
+            gl::BindTexture(gl::TEXTURE_2D, self.0);
+            gl::TexImage2D(gl::TEXTURE_2D, 0, gl::RGBA as i32, width as i32, height as i32, 0, gl::RGBA, gl::UNSIGNED_BYTE, pixels.as_ptr().cast::<std::ffi::c_void>());
+            gl::BindTexture(gl::TEXTURE_2D, 0);
+        }
+    }
+
+    pub fn bind(&self) {
+        #[allow(unsafe_code)]
+        unsafe {
+            gl::BindTexture(gl::TEXTURE_2D, self.0);
         }
     }
 }

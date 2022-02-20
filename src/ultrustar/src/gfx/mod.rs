@@ -1,4 +1,4 @@
-use egui::ClippedMesh;
+use egui::{ClippedMesh, FontImage};
 
 use crate::platform::Platform;
 
@@ -20,7 +20,7 @@ pub trait Renderer: Sized {
     fn get_window(&self) -> &crate::Window;
 
     /// Refresh the graphical representation
-    fn render(&self, meshes: Vec<ClippedMesh>);
+    fn render(&mut self, meshes: Vec<ClippedMesh>, font_image: &FontImage);
 }
 
 pub mod gl;

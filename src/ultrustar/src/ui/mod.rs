@@ -5,6 +5,7 @@ use crate::{
 use egui_winit::State as EventAccumulator;
 use log::info;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use winit::{event::WindowEvent, window::Window};
 
 type Renderer = <Platform as PlatformApi>::Renderer;
@@ -55,12 +56,14 @@ impl MainUI {
     }
     // FIXME not fully implemented
     #[allow(clippy::unused_self)]
-    pub fn render(&mut self, renderer: &Renderer) {
+    pub fn render(&mut self, renderer: &mut Renderer) {
         let window = renderer.get_window();
         let raw_input: egui::RawInput = self.events.take_egui_input(window);
         let (output, shapes) = self.ctx.run(raw_input, Self::build);
         let meshes = self.ctx.tessellate(shapes);
         self.events.handle_output(window, &self.ctx, output);
-        renderer.render(meshes);
+
+        let font_image = self.ctx.font_image();
+        renderer.render(meshes, &Arc::try_unwrap(font_image).unwrap_or_default());
     }
 }

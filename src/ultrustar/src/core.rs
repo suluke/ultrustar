@@ -81,7 +81,7 @@ pub fn run(platform: Platform) {
     // wrap code in IIFE to write any errors to log before panicing
     (|| -> anyhow::Result<()> {
         let userdata = Platform::load_userdata("default")?;
-        let renderer = platform.create_renderer(&userdata.gfx)?;
+        let mut renderer = platform.create_renderer(&userdata.gfx)?;
         let audio = Audio::init(&userdata.audio)?;
         let note_input = audio.default_note_input()?;
         info!("Audio Inputs: {:?}", audio.list_note_inputs());
@@ -89,7 +89,7 @@ pub fn run(platform: Platform) {
         let mut main_ui = ui::MainUI::new(&userdata.ui, renderer.get_window());
         info!("Library with {} songs", library.len());
         platform.run(move |event, _| match event {
-            Event::RedrawRequested(_) => main_ui.render(&renderer),
+            Event::RedrawRequested(_) => main_ui.render(&mut renderer),
             Event::UserEvent(Signals::Exit) => {
                 Platform::persist_userdata(&userdata).expect("Persisting settings failed");
                 note_input.read_current().unwrap();
